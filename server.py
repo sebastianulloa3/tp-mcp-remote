@@ -102,16 +102,16 @@ class TPClient:
             "Referer": "https://home.trainingpeaks.com/login",
         }
 
-        async with httpx.AsyncClient(headers=headers, follow_redirects=False, timeout=15.0) as client:
+        async with httpx.AsyncClient(headers=headers, follow_redirects=True, timeout=20.0) as client:
             get_resp = await client.get(login_url)
             if get_resp.status_code != 200:
-                raise ValueError(f"No se pudo cargar la página de login: HTTP {get_resp.status_code}")
+                raise ValueError(f"No se pudo cargar la pagina de login: HTTP {get_resp.status_code}")
 
             parser = _LoginFormParser()
             parser.feed(get_resp.text)
             token = parser.verification_token
             if not token:
-                raise ValueError("No se encontró el __RequestVerificationToken en la página de login.")
+                raise ValueError("No se encontro el __RequestVerificationToken en la pagina de login.")
 
             data = {
                 "__RequestVerificationToken": token,
@@ -124,15 +124,58 @@ class TPClient:
             }
             post_resp = await client.post(login_url, data=data)
 
+            # --- DIAGNOSTICO REAL --------------------------------------------
+            cookie_names = list(client.cookies.keys())
+            logger.info(
+                "POST /login -> HTTP %s | url final: %s | cookies: %s",
+                post_resp.status_code,
+                post_resp.url,
+                cookie_names or "(ninguna)",
+            )
+
             tp_auth = client.cookies.get("Production_tpAuth")
+
+            # Fallback: TP puede haber renombrado la cookie de sesion.
+            if not tp_auth:
+                for name in cookie_names:
+                    if "tpauth" in name.lower():
+                        logger.warning(
+                            "Usando cookie alterna '%s' (se esperaba 'Production_tpAuth').", name
+                        )
+                        tp_auth = client.cookies.get(name)
+                        break
+
             if tp_auth:
                 logger.info("Login correcto.")
                 return tp_auth
 
-            txt = post_resp.text.lower()
-            if "incorrect" in txt or "no es correcto" in txt:
-                raise ValueError("Login fallido: usuario o contraseña incorrectos.")
-            raise ValueError(f"Login fallido: no se recibió la cookie de sesión (HTTP {post_resp.status_code}).")
+            txt = post_resp.text
+            low = txt.lower()
+
+            if any(k in low for k in ("selectedmfamethod", "verification code", "codigo de verificacion", "two-factor", "two factor")):
+                raise ValueError(
+                    "Login bloqueado por verificacion en dos pasos (MFA/2FA). "
+                    "Desactiva el 2FA en esta cuenta de TrainingPeaks, o hay que implementar el flujo MFA."
+                )
+            if "captcha" in low:
+                raise ValueError(
+                    "Login bloqueado por CAPTCHA. Suele activarse tras varios intentos seguidos. "
+                    "Espera 15-30 minutos sin reintentar y vuelve a probar."
+                )
+            if any(k in low for k in ("locked", "bloquead", "suspend")):
+                raise ValueError("TrainingPeaks reporta la cuenta bloqueada o suspendida temporalmente.")
+            if any(k in low for k in ("incorrect", "no es correcto", "invalid username", "invalid password")):
+                raise ValueError(
+                    f"TrainingPeaks rechazo las credenciales de '{username}'. "
+                    f"(HTTP {post_resp.status_code}, url final: {post_resp.url})"
+                )
+
+            snippet = " ".join(txt.split())[:500]
+            raise ValueError(
+                f"Login fallido: no llego la cookie de sesion. "
+                f"HTTP {post_resp.status_code} | url final: {post_resp.url} | "
+                f"cookies: {cookie_names or '(ninguna)'} | respuesta: {snippet}"
+            )
 
     async def _get_token(self) -> str:
         now = time.time()
