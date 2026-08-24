@@ -451,7 +451,35 @@ async def tp_get_weekly_summary(athlete: str, week_of: str | None = None) -> dic
     return await client.get_weekly_summary(athlete, week_of=week_of)
 
 
+class _NormalizeMcpPath:
+    """Hace que /mcp (sin barra final) funcione igual que /mcp/ sin redirect 307.
+
+    Claude.ai guarda la URL del conector sin barra final, y FastMCP monta el
+    endpoint con Starlette Mount("/mcp"), que responde 307 -> /mcp/. Detras del
+    proxy TLS de Railway ese redirect sale como http:// y el cliente lo rechaza.
+    Reescribimos la ruta a /mcp/ antes de enrutar: nunca hay redirect.
+    """
+
+    def __init__(self, app):
+        self.app = app
+
+    async def __call__(self, scope, receive, send):
+        if scope.get("type") == "http" and scope.get("path") == "/mcp":
+            scope = dict(scope)
+            scope["path"] = "/mcp/"
+            scope["raw_path"] = b"/mcp/"
+        await self.app(scope, receive, send)
+
+
 if __name__ == "__main__":
+    import uvicorn
+
     logger.info("Arrancando TrainingPeaks MCP (REMOTO, solo lectura) en modo HTTP...")
-    # transport="streamable-http": expone el servidor por HTTP en /mcp
-    mcp.run(transport="streamable-http")
+    app = _NormalizeMcpPath(mcp.streamable_http_app())
+    uvicorn.run(
+        app,
+        host="0.0.0.0",
+        port=int(os.environ.get("PORT", "8000")),
+        forwarded_allow_ips="*",
+        proxy_headers=True,
+    )
