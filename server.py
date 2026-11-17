@@ -791,6 +791,24 @@ async def tp_release_week(athletes: list[str] | None = None, group: str | None =
     return await client.release_week(athletes, group, week_of)
 
 
+# ---------------------------------------------------------------------------
+# Librerías y planes (solo lectura) — para migrar a Intervals.icu
+# ---------------------------------------------------------------------------
+from tp_libraries_tools import register_library_tools
+
+
+async def _tp_get_url(url: str) -> Any:
+    headers = await client._auth_headers()
+    async with httpx.AsyncClient(timeout=30.0, follow_redirects=True) as c:
+        resp = await c.get(url, headers=headers)
+    if resp.status_code != 200:
+        raise ValueError(f"TrainingPeaks respondió HTTP {resp.status_code} en {url.split('?')[0]}")
+    return resp.json() if resp.content else None
+
+
+register_library_tools(mcp, _tp_get_url)
+
+
 class _NormalizeMcpPath:
     """Hace que /mcp (sin barra final) funcione igual que /mcp/ sin redirect 307.
 
