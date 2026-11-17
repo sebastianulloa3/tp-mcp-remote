@@ -1,12 +1,17 @@
 """
-TrainingPeaks MCP — versión REMOTA de solo lectura
-==================================================
+TrainingPeaks MCP — versión REMOTA (lectura + edición para coach)
+=================================================================
 
 Un servidor MCP mínimo que conecta TrainingPeaks con Claude (y cualquier
 asistente compatible con el Model Context Protocol).
 
-Esta versión es DELIBERADAMENTE limitada: SOLO LEE datos.
-No crea entrenamientos, no escribe comentarios, no borra nada.
+Lectura: perfil, atletas, carpetas del coach, entrenamientos, forma, resumen
+semanal y revisión de cargas por carpeta.
+Edición (solo si la variable MCP_SECRET está configurada): crear, editar,
+mover, ocultar/liberar y borrar sesiones planificadas.
+
+Seguridad: si MCP_SECRET existe, el endpoint pasa a ser /mcp/<MCP_SECRET> y
+/mcp a secas deja de responder. Sin MCP_SECRET el servidor queda en solo lectura.
 
 Expone estas herramientas:
   - tp_get_profile          -> tu perfil de atleta
@@ -14,6 +19,11 @@ Expone estas herramientas:
   - tp_get_workouts         -> entrenamientos en un rango de fechas
   - tp_get_fitness          -> curva de forma/fatiga (CTL / ATL / TSB)
   - tp_get_weekly_summary   -> resumen de una semana
+  - tp_list_groups          -> carpetas del coach (A Lunes, Packs...) con sus atletas
+  - tp_review_week          -> por carpeta: quién no tiene carga, quién tiene
+                               sesiones ocultas y quién está en rojo
+  - tp_create_workout / tp_update_workout / tp_delete_workout
+  - tp_release_week         -> libera (hace visibles) las sesiones ocultas de la semana
 
 Autenticación: login automático con tu usuario y contraseña de TrainingPeaks.
 Las credenciales viven en las variables de entorno del servidor (TP_USERNAME,
@@ -47,6 +57,59 @@ logger = logging.getLogger("tp-remote")
 
 # Base de la API interna que usa la web de TrainingPeaks.
 TP_API_BASE = "https://tpapi.trainingpeaks.com"
+
+
+SPORTS: dict[str, int] = {
+    "natacion": 1, "swim": 1, "ciclismo": 2, "bike": 2, "carrera": 3, "run": 3,
+    "running": 3, "brick": 4, "crosstrain": 5, "carrera_competencia": 6, "race": 6,
+    "descanso": 7, "dayoff": 7, "mtb": 8, "fuerza": 9, "strength": 9, "custom": 10,
+    "esqui": 11, "remo": 12, "caminata": 13, "walk": 13, "otro": 100, "other": 100,
+}
+SPORT_NAMES: dict[int, str] = {
+    1: "Natación", 2: "Ciclismo", 3: "Carrera", 4: "Brick", 5: "Crosstrain",
+    6: "Competencia", 7: "Descanso", 8: "MTB", 9: "Fuerza", 10: "Custom",
+    11: "Esquí", 12: "Remo", 13: "Caminata", 100: "Otro",
+}
+
+
+def _sport_id(sport: str) -> int:
+    key = sport.strip().lower().replace("ó", "o").replace("í", "i").replace(" ", "_")
+    if key not in SPORTS:
+        raise ValueError(f"Deporte '{sport}' no reconocido. Usa: natacion, ciclismo, carrera, brick, fuerza, descanso, otro.")
+    return SPORTS[key]
+
+
+def _week_bounds(week_of: str | None) -> tuple[date, date]:
+    ref = datetime.strptime(week_of, "%Y-%m-%d").date() if week_of else date.today()
+    monday = ref - timedelta(days=ref.weekday())
+    return monday, monday + timedelta(days=6)
+
+
+def _compliance(w: dict[str, Any], today: date) -> str:
+    """Color de cumplimiento al estilo TrainingPeaks."""
+    day = datetime.strptime(w["date"], "%Y-%m-%d").date() if w.get("date") else today
+    planned = w.get("duration_hours_planned")
+    actual = w.get("duration_hours_actual")
+    if w["status"] == "completado":
+        if not planned:
+            return "sin plan (hecho)"
+        r = (actual or 0) / planned
+        if r < 0.5 or r > 1.5:
+            return "rojo"
+        if r < 0.8 or r > 1.2:
+            return "amarillo"
+        return "verde"
+    if day < today:
+        return "rojo"  # planificado, día pasado, no se hizo
+    return "pendiente"
+
+
+def _writes_enabled() -> None:
+    if not os.environ.get("MCP_SECRET"):
+        raise PermissionError(
+            "La edición está desactivada: falta la variable MCP_SECRET en Railway. "
+            "Configúrala y usa la URL /mcp/<MCP_SECRET> en el conector."
+        )
 
 
 # ---------------------------------------------------------------------------
@@ -300,7 +363,9 @@ class TPClient:
                     "id": str(w.get("workoutId")) if w.get("workoutId") is not None else None,
                     "date": day,
                     "title": w.get("title"),
+                    "sport": SPORT_NAMES.get(w.get("workoutTypeValueId"), "Otro"),
                     "status": "completado" if completed else "planificado",
+                    "hidden": bool(w.get("isHidden")),
                     "duration_hours_planned": w.get("totalTimePlanned"),
                     "duration_hours_actual": actual,
                     "tss": w.get("tssActual") if w.get("tssActual") is not None else w.get("tssPlanned"),
@@ -353,6 +418,198 @@ class TPClient:
                 current = {**daily[-1], "estado": status}
 
             return {"start_date": q_start, "end_date": q_end, "current": current, "daily_data": daily}
+
+    # -- Carpetas del coach (en la API se llaman "tags") ------------------
+
+    async def _request(self, method: str, path: str, **kw) -> httpx.Response:
+        headers = await self._auth_headers()
+        if "json" in kw:
+            headers["Content-Type"] = "application/json"
+        async with httpx.AsyncClient(timeout=20.0) as c:
+            return await c.request(method, f"{TP_API_BASE}{path}", headers=headers, **kw)
+
+    async def list_groups(self) -> dict[str, Any]:
+        user = await self._load_user()
+        coach_id = user.get("personId")
+        resp = await self._request("GET", f"/coaches/v2/coaches/{coach_id}/tags")
+        if resp.status_code != 200:
+            raise ValueError(f"No se pudieron leer las carpetas: HTTP {resp.status_code}")
+        names = {a["athlete_id"]: a["name"] for a in await self._athletes()}
+        groups = []
+        for t in resp.json() if isinstance(resp.json(), list) else []:
+            ids = t.get("athleteIds") or []
+            groups.append({
+                "id": t.get("id"),
+                "name": t.get("name", ""),
+                "is_default": t.get("isDefault", False),
+                "athlete_count": len(ids),
+                "athletes": [{"athlete_id": i, "name": names.get(i, f"id {i}")} for i in ids],
+            })
+        return {"count": len(groups), "groups": groups}
+
+    async def review_week(self, groups: list[str] | None = None, week_of: str | None = None) -> dict[str, Any]:
+        monday, sunday = _week_bounds(week_of)
+        today = date.today()
+        all_groups = (await self.list_groups())["groups"]
+        if groups:
+            wanted = [g.strip().lower() for g in groups]
+            sel = [g for g in all_groups if any(w in g["name"].lower() for w in wanted)]
+        else:
+            sel = [g for g in all_groups if not g["is_default"]]
+        if not sel:
+            raise ValueError("No encontré esas carpetas. Usa tp_list_groups para ver los nombres.")
+
+        sem = asyncio.Semaphore(6)
+
+        async def check(a: dict[str, Any]) -> dict[str, Any]:
+            async with sem:
+                try:
+                    data = await self.get_workouts(a["athlete_id"], monday.isoformat(), sunday.isoformat())
+                except Exception as e:  # noqa: BLE001
+                    return {**a, "error": str(e)}
+            ws = [w for w in data["workouts"] if w["sport"] != "Descanso"]
+            for w in ws:
+                w["color"] = _compliance(w, today)
+            planned = [w for w in ws if w["duration_hours_planned"] or w["status"] == "planificado"]
+            hidden = [w for w in ws if w["hidden"] and w["status"] == "planificado"]
+            red = [w for w in ws if w["color"] == "rojo"]
+            if not planned:
+                estado = "SIN CARGA"
+            elif len(hidden) == len([w for w in planned if w["status"] == "planificado"]) and hidden:
+                estado = "CARGA OCULTA"
+            elif red:
+                estado = "EN ROJO"
+            else:
+                estado = "OK"
+            return {
+                **a,
+                "estado": estado,
+                "sesiones_planificadas": len(planned),
+                "ocultas": len(hidden),
+                "completadas": len([w for w in ws if w["status"] == "completado"]),
+                "en_rojo": [{"fecha": w["date"], "titulo": w["title"], "deporte": w["sport"]} for w in red],
+            }
+
+        result = []
+        for g in sel:
+            rows = await asyncio.gather(*(check(a) for a in g["athletes"]))
+            order = {"SIN CARGA": 0, "CARGA OCULTA": 1, "EN ROJO": 2, "OK": 3}
+            rows = sorted(rows, key=lambda r: order.get(r.get("estado"), -1))
+            result.append({
+                "carpeta": g["name"],
+                "resumen": {k: sum(1 for r in rows if r.get("estado") == k) for k in order},
+                "atletas": rows,
+            })
+        return {"semana": {"inicio": monday.isoformat(), "fin": sunday.isoformat()}, "carpetas": result}
+
+    # -- Edición de sesiones --------------------------------------------------
+
+    async def create_workout(self, athlete: str, workout_date: str, sport: str, title: str,
+                             duration_minutes: float | None = None, description: str | None = None,
+                             distance_km: float | None = None, tss_planned: float | None = None,
+                             hidden: bool = False) -> dict[str, Any]:
+        _writes_enabled()
+        athlete_id = await self._resolve_athlete(athlete)
+        sid = _sport_id(sport)
+        payload: dict[str, Any] = {
+            "athleteId": athlete_id,
+            "workoutDay": f"{workout_date}T00:00:00",
+            "workoutTypeFamilyId": sid,
+            "workoutTypeValueId": sid,
+            "title": title,
+            "isHidden": hidden,
+        }
+        if duration_minutes is not None:
+            payload["totalTimePlanned"] = duration_minutes / 60.0
+        if description:
+            payload["description"] = description
+        if distance_km is not None:
+            payload["distancePlanned"] = distance_km * 1000
+        if tss_planned is not None:
+            payload["tssPlanned"] = tss_planned
+        resp = await self._request("POST", f"/fitness/v6/athletes/{athlete_id}/workouts", json=payload)
+        if resp.status_code not in (200, 201):
+            raise ValueError(f"No se pudo crear la sesión: HTTP {resp.status_code} {resp.text[:200]}")
+        d = resp.json()
+        return {"ok": True, "workout_id": d.get("workoutId"), "athlete_id": athlete_id,
+                "fecha": workout_date, "titulo": title, "oculta": hidden}
+
+    async def _get_workout_raw(self, athlete_id: int, workout_id: str) -> dict[str, Any]:
+        resp = await self._request("GET", f"/fitness/v6/athletes/{athlete_id}/workouts/{workout_id}")
+        if resp.status_code != 200:
+            raise ValueError(f"No encontré la sesión {workout_id}: HTTP {resp.status_code}")
+        return resp.json()
+
+    async def update_workout(self, athlete: str, workout_id: str, title: str | None = None,
+                             description: str | None = None, workout_date: str | None = None,
+                             duration_minutes: float | None = None, distance_km: float | None = None,
+                             tss_planned: float | None = None, sport: str | None = None,
+                             hidden: bool | None = None, coach_comment: str | None = None) -> dict[str, Any]:
+        _writes_enabled()
+        athlete_id = await self._resolve_athlete(athlete)
+        w = await self._get_workout_raw(athlete_id, workout_id)
+        if title is not None:
+            w["title"] = title
+        if description is not None:
+            w["description"] = description
+        if workout_date is not None:
+            w["workoutDay"] = f"{workout_date}T00:00:00"
+            if w.get("startTimePlanned"):
+                t = w["startTimePlanned"].split("T")[1] if "T" in w["startTimePlanned"] else "00:00:00"
+                w["startTimePlanned"] = f"{workout_date}T{t}"
+        if duration_minutes is not None:
+            w["totalTimePlanned"] = duration_minutes / 60.0
+        if distance_km is not None:
+            w["distancePlanned"] = distance_km * 1000
+        if tss_planned is not None:
+            w["tssPlanned"] = tss_planned
+        if sport is not None:
+            sid = _sport_id(sport)
+            w["workoutTypeFamilyId"] = sid
+            w["workoutTypeValueId"] = sid
+        if hidden is not None:
+            w["isHidden"] = hidden
+        if coach_comment is not None:
+            w["coachComments"] = coach_comment
+        resp = await self._request("PUT", f"/fitness/v6/athletes/{athlete_id}/workouts/{workout_id}", json=w)
+        if resp.status_code not in (200, 204):
+            raise ValueError(f"No se pudo actualizar la sesión: HTTP {resp.status_code} {resp.text[:200]}")
+        return {"ok": True, "workout_id": workout_id, "titulo": w.get("title"),
+                "fecha": (w.get("workoutDay") or "").split("T")[0], "oculta": bool(w.get("isHidden"))}
+
+    async def delete_workout(self, athlete: str, workout_id: str) -> dict[str, Any]:
+        _writes_enabled()
+        athlete_id = await self._resolve_athlete(athlete)
+        w = await self._get_workout_raw(athlete_id, workout_id)
+        if w.get("completed") or (w.get("totalTime") or 0) > 0:
+            raise ValueError("Esa sesión ya tiene datos del atleta (completada). No la borro por seguridad.")
+        resp = await self._request("DELETE", f"/fitness/v6/athletes/{athlete_id}/workouts/{workout_id}")
+        if resp.status_code not in (200, 204):
+            raise ValueError(f"No se pudo borrar la sesión: HTTP {resp.status_code}")
+        return {"ok": True, "borrada": workout_id, "titulo": w.get("title")}
+
+    async def release_week(self, athletes: list[str] | None = None, group: str | None = None,
+                           week_of: str | None = None) -> dict[str, Any]:
+        _writes_enabled()
+        monday, sunday = _week_bounds(week_of)
+        targets: list[str | int] = list(athletes or [])
+        if group:
+            gs = [g for g in (await self.list_groups())["groups"] if group.lower() in g["name"].lower()]
+            if not gs:
+                raise ValueError(f"No encontré la carpeta '{group}'.")
+            targets += [a["athlete_id"] for g in gs for a in g["athletes"]]
+        if not targets:
+            raise ValueError("Indica atletas o una carpeta.")
+        out = []
+        for t in targets:
+            data = await self.get_workouts(t, monday.isoformat(), sunday.isoformat())
+            freed = []
+            for w in data["workouts"]:
+                if w["hidden"] and w["status"] == "planificado" and w["id"]:
+                    await self.update_workout(str(data["athlete_id"]), w["id"], hidden=False)
+                    freed.append(f"{w['date']} {w['title']}")
+            out.append({"athlete_id": data["athlete_id"], "liberadas": freed})
+        return {"semana": {"inicio": monday.isoformat(), "fin": sunday.isoformat()}, "resultado": out}
 
     async def get_weekly_summary(self, athlete: str | int, week_of: str | None = None) -> dict[str, Any]:
         ref = datetime.strptime(week_of, "%Y-%m-%d").date() if week_of else date.today()
@@ -451,6 +708,89 @@ async def tp_get_weekly_summary(athlete: str, week_of: str | None = None) -> dic
     return await client.get_weekly_summary(athlete, week_of=week_of)
 
 
+@mcp.tool()
+async def tp_list_groups() -> dict[str, Any]:
+    """Lista las carpetas (grupos) de atletas del coach tal como se ven en
+    TrainingPeaks (p. ej. "A Lunes", "B Martes", "Packs"), con los atletas de cada una."""
+    return await client.list_groups()
+
+
+@mcp.tool()
+async def tp_review_week(groups: list[str] | None = None, week_of: str | None = None) -> dict[str, Any]:
+    """Revisa la semana de los atletas por carpeta y devuelve, para cada uno:
+    SIN CARGA (no tiene sesiones), CARGA OCULTA (todo lo pendiente está oculto,
+    no liberado), EN ROJO (sesiones no hechas o muy por fuera de lo planificado) u OK.
+
+    Args:
+        groups: Nombres (o parte) de las carpetas a revisar, p. ej. ["A Lunes", "Packs"].
+                Si se omite, revisa todas las carpetas menos la de por defecto.
+        week_of: Cualquier fecha de la semana (YYYY-MM-DD). Por defecto, la actual.
+    """
+    return await client.review_week(groups, week_of)
+
+
+@mcp.tool()
+async def tp_create_workout(athlete: str, date: str, sport: str, title: str,
+                            duration_minutes: float | None = None, description: str | None = None,
+                            distance_km: float | None = None, tss_planned: float | None = None,
+                            hidden: bool = False) -> dict[str, Any]:
+    """Crea una sesión planificada en el calendario de un atleta. EDITA TrainingPeaks:
+    confirma con el coach antes de usarla.
+
+    Args:
+        athlete: Nombre o athleteId.
+        date: Día (YYYY-MM-DD).
+        sport: natacion, ciclismo, carrera, brick, fuerza, crosstrain, descanso u otro.
+        title: Título de la sesión.
+        duration_minutes, distance_km, tss_planned, description: opcionales.
+        hidden: True para dejarla oculta al atleta (sin liberar).
+    """
+    return await client.create_workout(athlete, date, sport, title, duration_minutes,
+                                       description, distance_km, tss_planned, hidden)
+
+
+@mcp.tool()
+async def tp_update_workout(athlete: str, workout_id: str, title: str | None = None,
+                            description: str | None = None, date: str | None = None,
+                            duration_minutes: float | None = None, distance_km: float | None = None,
+                            tss_planned: float | None = None, sport: str | None = None,
+                            hidden: bool | None = None, coach_comment: str | None = None) -> dict[str, Any]:
+    """Edita una sesión existente: título, descripción, mover de día, duración,
+    distancia, TSS, deporte, ocultar/liberar o comentario del coach. Solo cambia
+    los campos que se pasen. EDITA TrainingPeaks: confirma con el coach antes.
+
+    Args:
+        athlete: Nombre o athleteId.
+        workout_id: id de la sesión (sale en tp_get_workouts).
+        date: nuevo día (YYYY-MM-DD) para moverla.
+        hidden: False la libera (visible), True la oculta.
+    """
+    return await client.update_workout(athlete, workout_id, title, description, date,
+                                       duration_minutes, distance_km, tss_planned, sport,
+                                       hidden, coach_comment)
+
+
+@mcp.tool()
+async def tp_delete_workout(athlete: str, workout_id: str) -> dict[str, Any]:
+    """Borra una sesión PLANIFICADA (nunca borra una que el atleta ya completó).
+    Es irreversible: confirma con el coach antes de usarla."""
+    return await client.delete_workout(athlete, workout_id)
+
+
+@mcp.tool()
+async def tp_release_week(athletes: list[str] | None = None, group: str | None = None,
+                          week_of: str | None = None) -> dict[str, Any]:
+    """Libera (hace visibles) todas las sesiones ocultas de la semana para los
+    atletas indicados o para toda una carpeta. EDITA TrainingPeaks: confirma antes.
+
+    Args:
+        athletes: Lista de nombres o athleteIds.
+        group: Nombre (o parte) de una carpeta, p. ej. "Packs".
+        week_of: Cualquier fecha de la semana (YYYY-MM-DD). Por defecto, la actual.
+    """
+    return await client.release_week(athletes, group, week_of)
+
+
 class _NormalizeMcpPath:
     """Hace que /mcp (sin barra final) funcione igual que /mcp/ sin redirect 307.
 
@@ -458,23 +798,40 @@ class _NormalizeMcpPath:
     endpoint con Starlette Mount("/mcp"), que responde 307 -> /mcp/. Detras del
     proxy TLS de Railway ese redirect sale como http:// y el cliente lo rechaza.
     Reescribimos la ruta a /mcp/ antes de enrutar: nunca hay redirect.
+
+    Si MCP_SECRET está configurada, SOLO responde en /mcp/<MCP_SECRET>;
+    cualquier otra ruta recibe 404 (así nadie sin la clave lee ni edita).
     """
 
     def __init__(self, app):
         self.app = app
+        self.secret = os.environ.get("MCP_SECRET", "").strip()
 
     async def __call__(self, scope, receive, send):
-        if scope.get("type") == "http" and scope.get("path") == "/mcp":
-            scope = dict(scope)
-            scope["path"] = "/mcp/"
-            scope["raw_path"] = b"/mcp/"
+        if scope.get("type") == "http":
+            path = scope.get("path", "")
+            if self.secret:
+                base = f"/mcp/{self.secret}"
+                if path in (base, base + "/"):
+                    path = "/mcp/"
+                else:
+                    await send({"type": "http.response.start", "status": 404,
+                                "headers": [(b"content-type", b"text/plain")]})
+                    await send({"type": "http.response.body", "body": b"Not found"})
+                    return
+            elif path == "/mcp":
+                path = "/mcp/"
+            if path != scope.get("path"):
+                scope = dict(scope)
+                scope["path"] = path
+                scope["raw_path"] = path.encode()
         await self.app(scope, receive, send)
 
 
 if __name__ == "__main__":
     import uvicorn
 
-    logger.info("Arrancando TrainingPeaks MCP (REMOTO, solo lectura) en modo HTTP...")
+    logger.info("Arrancando TrainingPeaks MCP (REMOTO) — edición %s", "ACTIVA" if os.environ.get("MCP_SECRET") else "desactivada (solo lectura)")
     app = _NormalizeMcpPath(mcp.streamable_http_app())
     uvicorn.run(
         app,
