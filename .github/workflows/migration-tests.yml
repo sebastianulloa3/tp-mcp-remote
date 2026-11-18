@@ -1,0 +1,21 @@
+name: Migration checks
+on:
+  pull_request:
+    paths:
+      - 'wolfpack_migration.py'
+      - 'tests/**'
+      - 'requirements.txt'
+      - '.github/workflows/migration-tests.yml'
+  push:
+    branches: ['feature/wolfpack-intervals-migration']
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - run: pip install -r requirements.txt pytest
+      - run: python -m compileall -q wolfpack_migration.py server.py
+      - run: pytest -q tests/test_wolfpack_migration.py
