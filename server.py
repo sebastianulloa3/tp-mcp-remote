@@ -808,6 +808,9 @@ async def _tp_get_url(url: str) -> Any:
 
 register_library_tools(mcp, _tp_get_url)
 
+from wolfpack_migration import register_migration_tools
+register_migration_tools(mcp, _tp_get_url)
+
 
 class _NormalizeMcpPath:
     """Hace que /mcp (sin barra final) funcione igual que /mcp/ sin redirect 307.
