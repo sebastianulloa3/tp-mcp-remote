@@ -1,0 +1,876 @@
+{
+  "schema_version": 1,
+  "source": "TrainingPeaks",
+  "export_purpose": "iCloud athlete dossiers dry-run",
+  "generated_date": "2026-11-19",
+  "athletes": [
+    {
+      "athlete_id": 4662467,
+      "name": "Erick",
+      "group": null,
+      "plan_active": null,
+      "administrative_status": "unknown"
+    },
+    {
+      "athlete_id": 5766769,
+      "name": "Nicolas",
+      "group": null,
+      "plan_active": null,
+      "administrative_status": "unknown"
+    },
+    {
+      "athlete_id": 5937215,
+      "name": "Harry Javier Prada",
+      "group": null,
+      "plan_active": null,
+      "administrative_status": "unknown"
+    },
+    {
+      "athlete_id": 4051896,
+      "name": "Aliz Adriana Afanador",
+      "group": null,
+      "plan_active": null,
+      "administrative_status": "unknown"
+    },
+    {
+      "athlete_id": 4651860,
+      "name": "Jose Aguilar",
+      "group": null,
+      "plan_active": null,
+      "administrative_status": "unknown"
+    },
+    {
+      "athlete_id": 5382850,
+      "name": "cindy alvarez",
+      "group": null,
+      "plan_active": null,
+      "administrative_status": "unknown"
+    },
+    {
+      "athlete_id": 4289281,
+      "name": "Carlos Andres",
+      "group": null,
+      "plan_active": null,
+      "administrative_status": "unknown"
+    },
+    {
+      "athlete_id": 4928276,
+      "name": "Lina Arenaza",
+      "group": null,
+      "plan_active": null,
+      "administrative_status": "unknown"
+    },
+    {
+      "athlete_id": 5416089,
+      "name": "Nelson Arias",
+      "group": null,
+      "plan_active": null,
+      "administrative_status": "unknown"
+    },
+    {
+      "athlete_id": 2212774,
+      "name": "Marysabel Arias Molina",
+      "group": null,
+      "plan_active": null,
+      "administrative_status": "unknown"
+    },
+    {
+      "athlete_id": 3563639,
+      "name": "Sebastian Aristizabal Gomez",
+      "group": null,
+      "plan_active": null,
+      "administrative_status": "unknown"
+    },
+    {
+      "athlete_id": 5996491,
+      "name": "Angie Avelino",
+      "group": null,
+      "plan_active": null,
+      "administrative_status": "unknown"
+    },
+    {
+      "athlete_id": 4549824,
+      "name": "Sergio Ayala",
+      "group": null,
+      "plan_active": null,
+      "administrative_status": "unknown"
+    },
+    {
+      "athlete_id": 6302438,
+      "name": "juan barbosa",
+      "group": null,
+      "plan_active": null,
+      "administrative_status": "unknown"
+    },
+    {
+      "athlete_id": 4162202,
+      "name": "Camilo Barrera",
+      "group": null,
+      "plan_active": null,
+      "administrative_status": "unknown"
+    },
+    {
+      "athlete_id": 2550719,
+      "name": "Juan Bedoya",
+      "group": null,
+      "plan_active": null,
+      "administrative_status": "unknown"
+    },
+    {
+      "athlete_id": 5373669,
+      "name": "Jose Beltran",
+      "group": null,
+      "plan_active": null,
+      "administrative_status": "unknown"
+    },
+    {
+      "athlete_id": 5724861,
+      "name": "Luis Betancourt",
+      "group": null,
+      "plan_active": null,
+      "administrative_status": "unknown"
+    },
+    {
+      "athlete_id": 5278307,
+      "name": "Camilo blanco",
+      "group": null,
+      "plan_active": null,
+      "administrative_status": "unknown"
+    },
+    {
+      "athlete_id": 4990083,
+      "name": "Natalia Blanco",
+      "group": null,
+      "plan_active": null,
+      "administrative_status": "unknown"
+    },
+    {
+      "athlete_id": 5588453,
+      "name": "christian borquez",
+      "group": null,
+      "plan_active": null,
+      "administrative_status": "unknown"
+    },
+    {
+      "athlete_id": 6744748,
+      "name": "Christian Borquez",
+      "group": null,
+      "plan_active": null,
+      "administrative_status": "unknown"
+    },
+    {
+      "athlete_id": 6660170,
+      "name": "Manuela Cáceres",
+      "group": null,
+      "plan_active": null,
+      "administrative_status": "unknown"
+    },
+    {
+      "athlete_id": 5508529,
+      "name": "Luisa Cadavid",
+      "group": null,
+      "plan_active": null,
+      "administrative_status": "unknown"
+    },
+    {
+      "athlete_id": 3926669,
+      "name": "Giovanni Campos",
+      "group": null,
+      "plan_active": null,
+      "administrative_status": "unknown"
+    },
+    {
+      "athlete_id": 5177391,
+      "name": "Gyssel Cantillo",
+      "group": null,
+      "plan_active": null,
+      "administrative_status": "unknown"
+    },
+    {
+      "athlete_id": 2805712,
+      "name": "Jaime Andres Cardenas",
+      "group": null,
+      "plan_active": null,
+      "administrative_status": "unknown"
+    },
+    {
+      "athlete_id": 5566501,
+      "name": "Diana Carolina Ortiz",
+      "group": null,
+      "plan_active": null,
+      "administrative_status": "unknown"
+    },
+    {
+      "athlete_id": 4913237,
+      "name": "Pablo Congote",
+      "group": null,
+      "plan_active": null,
+      "administrative_status": "unknown"
+    },
+    {
+      "athlete_id": 3930404,
+      "name": "Alejandro Cuberos Aguilera",
+      "group": null,
+      "plan_active": null,
+      "administrative_status": "unknown"
+    },
+    {
+      "athlete_id": 4629959,
+      "name": "Felipe Cubillos",
+      "group": null,
+      "plan_active": null,
+      "administrative_status": "unknown"
+    },
+    {
+      "athlete_id": 4963470,
+      "name": "KAREN  DANIELA",
+      "group": null,
+      "plan_active": null,
+      "administrative_status": "unknown"
+    },
+    {
+      "athlete_id": 4391246,
+      "name": "Juan David Moreno Gomez",
+      "group": null,
+      "plan_active": null,
+      "administrative_status": "unknown"
+    },
+    {
+      "athlete_id": 5415959,
+      "name": "Miguel De Luque",
+      "group": null,
+      "plan_active": null,
+      "administrative_status": "unknown"
+    },
+    {
+      "athlete_id": 2300438,
+      "name": "JUAN  DE VALDENEBRO",
+      "group": null,
+      "plan_active": null,
+      "administrative_status": "unknown"
+    },
+    {
+      "athlete_id": 5195560,
+      "name": "Nataly Diaz",
+      "group": null,
+      "plan_active": null,
+      "administrative_status": "unknown"
+    },
+    {
+      "athlete_id": 5832949,
+      "name": "Carolina Diaz",
+      "group": null,
+      "plan_active": null,
+      "administrative_status": "unknown"
+    },
+    {
+      "athlete_id": 4442489,
+      "name": "Rodolfo Donado",
+      "group": null,
+      "plan_active": null,
+      "administrative_status": "unknown"
+    },
+    {
+      "athlete_id": 5413694,
+      "name": "Santiago Duran",
+      "group": null,
+      "plan_active": null,
+      "administrative_status": "unknown"
+    },
+    {
+      "athlete_id": 5114492,
+      "name": "Diana Eslava",
+      "group": null,
+      "plan_active": null,
+      "administrative_status": "unknown"
+    },
+    {
+      "athlete_id": 6101328,
+      "name": "Juan Estrada",
+      "group": null,
+      "plan_active": null,
+      "administrative_status": "unknown"
+    },
+    {
+      "athlete_id": 4666164,
+      "name": "Andres Felipe",
+      "group": null,
+      "plan_active": null,
+      "administrative_status": "unknown"
+    },
+    {
+      "athlete_id": 3951452,
+      "name": "Juan Felipe Lizarazo",
+      "group": null,
+      "plan_active": null,
+      "administrative_status": "unknown"
+    },
+    {
+      "athlete_id": 2872245,
+      "name": "Maria Fernanda Lopez",
+      "group": null,
+      "plan_active": null,
+      "administrative_status": "unknown"
+    },
+    {
+      "athlete_id": 4650568,
+      "name": "Alejandro Forero",
+      "group": null,
+      "plan_active": null,
+      "administrative_status": "unknown"
+    },
+    {
+      "athlete_id": 5822091,
+      "name": "Catalina forero",
+      "group": null,
+      "plan_active": null,
+      "administrative_status": "unknown"
+    },
+    {
+      "athlete_id": 5462678,
+      "name": "Lorenzo Franco",
+      "group": null,
+      "plan_active": null,
+      "administrative_status": "unknown"
+    },
+    {
+      "athlete_id": 5245100,
+      "name": "CESAR GALAN",
+      "group": null,
+      "plan_active": null,
+      "administrative_status": "unknown"
+    },
+    {
+      "athlete_id": 4989566,
+      "name": "Jhon galvis",
+      "group": null,
+      "plan_active": null,
+      "administrative_status": "unknown"
+    },
+    {
+      "athlete_id": 5598477,
+      "name": "Catalina García",
+      "group": null,
+      "plan_active": null,
+      "administrative_status": "unknown"
+    },
+    {
+      "athlete_id": 6364652,
+      "name": "Gredley Garnica",
+      "group": null,
+      "plan_active": null,
+      "administrative_status": "unknown"
+    },
+    {
+      "athlete_id": 5754410,
+      "name": "Sebastian Gelves",
+      "group": null,
+      "plan_active": null,
+      "administrative_status": "unknown"
+    },
+    {
+      "athlete_id": 6664356,
+      "name": "Nicolas Gil Bazzani",
+      "group": null,
+      "plan_active": null,
+      "administrative_status": "unknown"
+    },
+    {
+      "athlete_id": 5195540,
+      "name": "Edgar gomez",
+      "group": null,
+      "plan_active": null,
+      "administrative_status": "unknown"
+    },
+    {
+      "athlete_id": 4085990,
+      "name": "Daniel Gomez",
+      "group": null,
+      "plan_active": null,
+      "administrative_status": "unknown"
+    },
+    {
+      "athlete_id": 4341518,
+      "name": "Gustavo Gonzalez",
+      "group": null,
+      "plan_active": null,
+      "administrative_status": "unknown"
+    },
+    {
+      "athlete_id": 3371757,
+      "name": "Ana Maria González Matiz",
+      "group": null,
+      "plan_active": null,
+      "administrative_status": "unknown"
+    },
+    {
+      "athlete_id": 5625140,
+      "name": "paola URUEÑA GORDILLO",
+      "group": null,
+      "plan_active": null,
+      "administrative_status": "unknown"
+    },
+    {
+      "athlete_id": 3849200,
+      "name": "Felipe Gordon Doncel",
+      "group": null,
+      "plan_active": null,
+      "administrative_status": "unknown"
+    },
+    {
+      "athlete_id": 5701783,
+      "name": "David Goyeneche",
+      "group": null,
+      "plan_active": null,
+      "administrative_status": "unknown"
+    },
+    {
+      "athlete_id": 5584099,
+      "name": "Mateo Herrera",
+      "group": null,
+      "plan_active": null,
+      "administrative_status": "unknown"
+    },
+    {
+      "athlete_id": 3754465,
+      "name": "Samir Jaramillo",
+      "group": null,
+      "plan_active": null,
+      "administrative_status": "unknown"
+    },
+    {
+      "athlete_id": 4093897,
+      "name": "Carlos Augusto Jimenez Vera",
+      "group": null,
+      "plan_active": null,
+      "administrative_status": "unknown"
+    },
+    {
+      "athlete_id": 4477239,
+      "name": "Sergio Joan Velasquez Reyes",
+      "group": null,
+      "plan_active": null,
+      "administrative_status": "unknown"
+    },
+    {
+      "athlete_id": 5601701,
+      "name": "Alexandra León",
+      "group": null,
+      "plan_active": null,
+      "administrative_status": "unknown"
+    },
+    {
+      "athlete_id": 5100523,
+      "name": "Santiago Lopez",
+      "group": null,
+      "plan_active": null,
+      "administrative_status": "unknown"
+    },
+    {
+      "athlete_id": 4145361,
+      "name": "Luis Martinez",
+      "group": null,
+      "plan_active": null,
+      "administrative_status": "unknown"
+    },
+    {
+      "athlete_id": 2338607,
+      "name": "Kelly Martinez",
+      "group": null,
+      "plan_active": null,
+      "administrative_status": "unknown"
+    },
+    {
+      "athlete_id": 2628165,
+      "name": "Carolina Martinez",
+      "group": null,
+      "plan_active": null,
+      "administrative_status": "unknown"
+    },
+    {
+      "athlete_id": 6145079,
+      "name": "Jhonathan Medina",
+      "group": null,
+      "plan_active": null,
+      "administrative_status": "unknown"
+    },
+    {
+      "athlete_id": 3762034,
+      "name": "Carlos Melendez",
+      "group": null,
+      "plan_active": null,
+      "administrative_status": "unknown"
+    },
+    {
+      "athlete_id": 2239718,
+      "name": "CARMENZA MENDEZ BEJARANO",
+      "group": null,
+      "plan_active": null,
+      "administrative_status": "unknown"
+    },
+    {
+      "athlete_id": 6095486,
+      "name": "Sebastian Mendoza",
+      "group": null,
+      "plan_active": null,
+      "administrative_status": "unknown"
+    },
+    {
+      "athlete_id": 4330241,
+      "name": "Juan Meza",
+      "group": null,
+      "plan_active": null,
+      "administrative_status": "unknown"
+    },
+    {
+      "athlete_id": 4550018,
+      "name": "martha mills",
+      "group": null,
+      "plan_active": null,
+      "administrative_status": "unknown"
+    },
+    {
+      "athlete_id": 6657299,
+      "name": "Andreina Morales",
+      "group": null,
+      "plan_active": null,
+      "administrative_status": "unknown"
+    },
+    {
+      "athlete_id": 4878570,
+      "name": "Nathaly Ochoa",
+      "group": null,
+      "plan_active": null,
+      "administrative_status": "unknown"
+    },
+    {
+      "athlete_id": 4894534,
+      "name": "Leidy Otalora",
+      "group": null,
+      "plan_active": null,
+      "administrative_status": "unknown"
+    },
+    {
+      "athlete_id": 3738285,
+      "name": "Juan Pablo Contreras",
+      "group": null,
+      "plan_active": null,
+      "administrative_status": "unknown"
+    },
+    {
+      "athlete_id": 5984452,
+      "name": "Maria Jose Paramo",
+      "group": null,
+      "plan_active": null,
+      "administrative_status": "unknown"
+    },
+    {
+      "athlete_id": 3959212,
+      "name": "Rafael ParraPena",
+      "group": null,
+      "plan_active": null,
+      "administrative_status": "unknown"
+    },
+    {
+      "athlete_id": 4602479,
+      "name": "Andres Patino",
+      "group": null,
+      "plan_active": null,
+      "administrative_status": "unknown"
+    },
+    {
+      "athlete_id": 6474011,
+      "name": "Nathalia Pineda",
+      "group": null,
+      "plan_active": null,
+      "administrative_status": "unknown"
+    },
+    {
+      "athlete_id": 3754094,
+      "name": "Paula Pinilla",
+      "group": null,
+      "plan_active": null,
+      "administrative_status": "unknown"
+    },
+    {
+      "athlete_id": 6145075,
+      "name": "Liz Polania",
+      "group": null,
+      "plan_active": null,
+      "administrative_status": "unknown"
+    },
+    {
+      "athlete_id": 5609723,
+      "name": "Alejandro Puentes",
+      "group": null,
+      "plan_active": null,
+      "administrative_status": "unknown"
+    },
+    {
+      "athlete_id": 5599725,
+      "name": "Juan Quintero",
+      "group": null,
+      "plan_active": null,
+      "administrative_status": "unknown"
+    },
+    {
+      "athlete_id": 4066111,
+      "name": "Ricardo Gaitan R",
+      "group": null,
+      "plan_active": null,
+      "administrative_status": "unknown"
+    },
+    {
+      "athlete_id": 5615254,
+      "name": "Santiago Ramirez",
+      "group": null,
+      "plan_active": null,
+      "administrative_status": "unknown"
+    },
+    {
+      "athlete_id": 2604337,
+      "name": "laura recaman",
+      "group": null,
+      "plan_active": null,
+      "administrative_status": "unknown"
+    },
+    {
+      "athlete_id": 4909923,
+      "name": "Ivan Recaman",
+      "group": null,
+      "plan_active": null,
+      "administrative_status": "unknown"
+    },
+    {
+      "athlete_id": 4883653,
+      "name": "Alejandro Riano",
+      "group": null,
+      "plan_active": null,
+      "administrative_status": "unknown"
+    },
+    {
+      "athlete_id": 5248947,
+      "name": "fredy ricardo",
+      "group": null,
+      "plan_active": null,
+      "administrative_status": "unknown"
+    },
+    {
+      "athlete_id": 5206193,
+      "name": "Nestor Rincon",
+      "group": null,
+      "plan_active": null,
+      "administrative_status": "unknown"
+    },
+    {
+      "athlete_id": 6718781,
+      "name": "Orlando robby",
+      "group": null,
+      "plan_active": null,
+      "administrative_status": "unknown"
+    },
+    {
+      "athlete_id": 5989114,
+      "name": "Christian Rodriguez",
+      "group": null,
+      "plan_active": null,
+      "administrative_status": "unknown"
+    },
+    {
+      "athlete_id": 5001160,
+      "name": "Manuela Rodriguez",
+      "group": null,
+      "plan_active": null,
+      "administrative_status": "unknown"
+    },
+    {
+      "athlete_id": 2900089,
+      "name": "Laura Rodriguez",
+      "group": null,
+      "plan_active": null,
+      "administrative_status": "unknown"
+    },
+    {
+      "athlete_id": 5164290,
+      "name": "David Rodriguez Navarro",
+      "group": null,
+      "plan_active": null,
+      "administrative_status": "unknown"
+    },
+    {
+      "athlete_id": 4933139,
+      "name": "Sergio Rojas",
+      "group": null,
+      "plan_active": null,
+      "administrative_status": "unknown"
+    },
+    {
+      "athlete_id": 4517306,
+      "name": "Laura Rojas",
+      "group": null,
+      "plan_active": null,
+      "administrative_status": "unknown"
+    },
+    {
+      "athlete_id": 5727685,
+      "name": "Simon Rojas",
+      "group": null,
+      "plan_active": null,
+      "administrative_status": "unknown"
+    },
+    {
+      "athlete_id": 6461099,
+      "name": "Camilo Rojas",
+      "group": null,
+      "plan_active": null,
+      "administrative_status": "unknown"
+    },
+    {
+      "athlete_id": 5428930,
+      "name": "Daniel Ruiz",
+      "group": null,
+      "plan_active": null,
+      "administrative_status": "unknown"
+    },
+    {
+      "athlete_id": 4583623,
+      "name": "JUAN S CONTRERAS",
+      "group": null,
+      "plan_active": null,
+      "administrative_status": "unknown"
+    },
+    {
+      "athlete_id": 6213059,
+      "name": "Simon Salazar Meza",
+      "group": null,
+      "plan_active": null,
+      "administrative_status": "unknown"
+    },
+    {
+      "athlete_id": 4729143,
+      "name": "Valentina Samudio",
+      "group": null,
+      "plan_active": null,
+      "administrative_status": "unknown"
+    },
+    {
+      "athlete_id": 5259091,
+      "name": "Camila Sandoval",
+      "group": null,
+      "plan_active": null,
+      "administrative_status": "unknown"
+    },
+    {
+      "athlete_id": 6198500,
+      "name": "Juan Sebastian Mejia",
+      "group": null,
+      "plan_active": null,
+      "administrative_status": "unknown"
+    },
+    {
+      "athlete_id": 4434025,
+      "name": "Natalia Segura",
+      "group": null,
+      "plan_active": null,
+      "administrative_status": "unknown"
+    },
+    {
+      "athlete_id": 4026295,
+      "name": "Andres Sierra",
+      "group": null,
+      "plan_active": null,
+      "administrative_status": "unknown"
+    },
+    {
+      "athlete_id": 4871127,
+      "name": "Camilo Sierra",
+      "group": null,
+      "plan_active": null,
+      "administrative_status": "unknown"
+    },
+    {
+      "athlete_id": 4341373,
+      "name": "Cristhiam Suarez",
+      "group": null,
+      "plan_active": null,
+      "administrative_status": "unknown"
+    },
+    {
+      "athlete_id": 3971431,
+      "name": "Claudine Suarez",
+      "group": null,
+      "plan_active": null,
+      "administrative_status": "unknown"
+    },
+    {
+      "athlete_id": 5853143,
+      "name": "Karen Tatiana",
+      "group": null,
+      "plan_active": null,
+      "administrative_status": "unknown"
+    },
+    {
+      "athlete_id": 4769370,
+      "name": "Monica Tolosa",
+      "group": null,
+      "plan_active": null,
+      "administrative_status": "unknown"
+    },
+    {
+      "athlete_id": 1731213,
+      "name": "Sebastian Ulloa",
+      "group": null,
+      "plan_active": null,
+      "administrative_status": "unknown"
+    },
+    {
+      "athlete_id": 5775667,
+      "name": "David Valencia",
+      "group": null,
+      "plan_active": null,
+      "administrative_status": "unknown"
+    },
+    {
+      "athlete_id": 5332701,
+      "name": "Ana Valencia",
+      "group": null,
+      "plan_active": null,
+      "administrative_status": "unknown"
+    },
+    {
+      "athlete_id": 5883121,
+      "name": "Roberto Vallejo",
+      "group": null,
+      "plan_active": null,
+      "administrative_status": "unknown"
+    },
+    {
+      "athlete_id": 6272161,
+      "name": "Fernando Vergel",
+      "group": null,
+      "plan_active": null,
+      "administrative_status": "unknown"
+    },
+    {
+      "athlete_id": 4109551,
+      "name": "Mafe Vernaza",
+      "group": null,
+      "plan_active": null,
+      "administrative_status": "unknown"
+    },
+    {
+      "athlete_id": 5274559,
+      "name": "Debby Zicer",
+      "group": null,
+      "plan_active": null,
+      "administrative_status": "unknown"
+    },
+    {
+      "athlete_id": 3884399,
+      "name": "Luis Fernando Millan Carreño",
+      "group": null,
+      "plan_active": null,
+      "administrative_status": "unknown"
+    }
+  ]
+}
