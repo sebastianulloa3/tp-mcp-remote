@@ -23,7 +23,7 @@ def category(a):
     if "PAUSAD" in group: return "03_PAUSADOS"
     # Calendar workouts do not prove an assigned plan.
     if a.get("plan_active") is True: return "01_ACTIVOS"
-    return "02_SIN_PLAN"
+    return "02_SIN_PLAN"  # legacy display only; unknown is NOT confirmed no-plan
 
 def sync(manifest, root, dry_run=True):
     root = Path(root).expanduser().resolve()
@@ -33,8 +33,24 @@ def sync(manifest, root, dry_run=True):
         aid = str(int(athlete["athlete_id"]))
         if aid in seen: continue
         seen.add(aid)
-        # Stable directory ID; no automatic moves when names/groups change.
-        folder = root / "ATLETAS" / "EXPEDIENTES" / ("TP-" + aid)
+        # Human-readable names; stable TP ID retained in profile.json.
+        base = root / "ATLETAS" / "EXPEDIENTES"
+        label = safe_name(athlete.get("name"))
+        folder = base / label
+        legacy = base / ("TP-" + aid)
+        if legacy.exists():
+            folder = legacy  # migrate separately; never duplicate existing data
+        elif folder.exists():
+            existing = folder / "perfil.json"
+            if existing.is_file():
+                try:
+                    current_id = str(json.loads(existing.read_text(encoding="utf-8")).get("athlete_id"))
+                except (ValueError, OSError):
+                    current_id = None
+                if current_id != aid:
+                    folder = base / (label + " · TP-" + aid)
+            else:
+                folder = base / (label + " · TP-" + aid)
         profile = {
             "schema_version": 1, "source": "TrainingPeaks",
             "athlete_id": int(aid), "name": athlete.get("name"),
