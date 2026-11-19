@@ -540,6 +540,48 @@ class TPClient:
             raise ValueError(f"No encontré la sesión {workout_id}: HTTP {resp.status_code}")
         return resp.json()
 
+    async def preview_copy_week(self, athlete: str, source_week: str,
+                                target_week: str, sports: list[str] | None = None,
+                                weekdays: list[int] | None = None) -> dict[str, Any]:
+        """Previsualiza copias de sesiones planificadas sin modificar calendarios."""
+        source_day = datetime.strptime(source_week, "%Y-%m-%d").date()
+        target_day = datetime.strptime(target_week, "%Y-%m-%d").date()
+        source_monday = source_day - timedelta(days=source_day.weekday())
+        target_monday = target_day - timedelta(days=target_day.weekday())
+        if source_monday == target_monday:
+            raise ValueError("La semana origen y destino deben ser distintas.")
+        if weekdays is not None and any(d not in range(7) for d in weekdays):
+            raise ValueError("weekdays usa 0=lunes hasta 6=domingo.")
+        source = await self.get_workouts(athlete, source_monday.isoformat(),
+                                         (source_monday + timedelta(days=6)).isoformat())
+        target = await self.get_workouts(athlete, target_monday.isoformat(),
+                                         (target_monday + timedelta(days=6)).isoformat())
+        selected_sports = {x.lower() for x in sports} if sports else None
+        proposals = []
+        for w in source["workouts"]:
+            if w["sport"] == "Descanso" or w["status"] != "planificado":
+                continue
+            day = date.fromisoformat(w["date"])
+            if weekdays is not None and day.weekday() not in weekdays:
+                continue
+            if selected_sports and w["sport"].lower() not in selected_sports:
+                continue
+            new_day = target_monday + timedelta(days=day.weekday())
+            existing = [x for x in target["workouts"] if x["date"] == new_day.isoformat()
+                        and x["sport"] == w["sport"]]
+            proposals.append({
+                "source_workout_id": w["id"], "title": w["title"],
+                "sport": w["sport"], "source_date": w["date"],
+                "target_date": new_day.isoformat(), "target_existing": existing,
+                "conflict": bool(existing), "description": w.get("description"),
+                "duration_minutes": round(w["duration_hours_planned"] * 60, 2)
+                    if w.get("duration_hours_planned") is not None else None,
+                "tss_planned": w.get("tss") if w["status"] == "planificado" else None,
+            })
+        return {"athlete_id": source["athlete_id"], "source_week": source_monday.isoformat(),
+                "target_week": target_monday.isoformat(), "proposals": proposals,
+                "applied": False, "note": "Solo previsualización. Requiere aprobación antes de crear copias."}
+
     async def preview_workout_edit(self, athlete: str, workout_id: str,
                                    tss_planned: float | None = None,
                                    coach_comment: str | None = None) -> dict[str, Any]:
@@ -766,6 +808,17 @@ async def tp_get_workouts(athlete: str, start_date: str | None = None, end_date:
         end_date: Fecha final en formato YYYY-MM-DD (máximo 90 días de rango). Por defecto, hoy.
     """
     return await client.get_workouts(athlete, start_date, end_date)
+
+
+@mcp.tool()
+async def tp_preview_copy_week(athlete: str, source_week: str, target_week: str,
+                               sports: list[str] | None = None,
+                               weekdays: list[int] | None = None) -> dict[str, Any]:
+    """Previsualiza copiar entrenamientos planificados entre semanas, con detección
+    de conflictos por fecha y deporte. weekdays: 0=lunes, 6=domingo.
+    No copia actividades completadas ni realiza escrituras.
+    """
+    return await client.preview_copy_week(athlete, source_week, target_week, sports, weekdays)
 
 
 @mcp.tool()
