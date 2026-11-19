@@ -540,6 +540,32 @@ class TPClient:
             raise ValueError(f"No encontré la sesión {workout_id}: HTTP {resp.status_code}")
         return resp.json()
 
+    async def preview_workout_edit(self, athlete: str, workout_id: str,
+                                   tss_planned: float | None = None,
+                                   coach_comment: str | None = None) -> dict[str, Any]:
+        """Previsualiza cambios permitidos; nunca escribe ni altera TSS real."""
+        athlete_id = await self._resolve_athlete(athlete)
+        w = await self._get_workout_raw(athlete_id, workout_id)
+        if str(w.get("athleteId", athlete_id)) != str(athlete_id):
+            raise ValueError("La actividad no pertenece al atleta indicado.")
+        if tss_planned is None and coach_comment is None:
+            raise ValueError("Indica al menos un campo a previsualizar.")
+        if tss_planned is not None and not (0 <= tss_planned <= 2000):
+            raise ValueError("tss_planned debe estar entre 0 y 2000.")
+        completed = bool(w.get("completed")) or (w.get("totalTime") or 0) > 0
+        if completed and tss_planned is not None:
+            raise ValueError("No se puede corregir TSS real cambiando tss_planned en una sesión completada.")
+        changes = {}
+        if tss_planned is not None:
+            changes["tssPlanned"] = {"before": w.get("tssPlanned"), "after": tss_planned}
+        if coach_comment is not None:
+            changes["coachComments"] = {"before": w.get("coachComments"), "after": coach_comment}
+        return {
+            "athlete_id": athlete_id, "workout_id": workout_id,
+            "completed": completed, "changes": changes, "applied": False,
+            "next_step": "Solicitar confirmación explícita del coach y usar tp_update_workout únicamente para estos campos permitidos.",
+        }
+
     async def audit_tss_range(self, athlete: str, start_date: str, end_date: str,
                               tss_per_hour_alert: float = 150.0) -> dict[str, Any]:
         """Señala cargas atípicas sin afirmar que sean erróneas."""
@@ -740,6 +766,17 @@ async def tp_get_workouts(athlete: str, start_date: str | None = None, end_date:
         end_date: Fecha final en formato YYYY-MM-DD (máximo 90 días de rango). Por defecto, hoy.
     """
     return await client.get_workouts(athlete, start_date, end_date)
+
+
+@mcp.tool()
+async def tp_preview_workout_edit(athlete: str, workout_id: str,
+                                  tss_planned: float | None = None,
+                                  coach_comment: str | None = None) -> dict[str, Any]:
+    """Previsualiza una edición sin aplicarla. Rechaza editar TSS planificado
+    en sesiones completadas porque eso no corrige el TSS real.
+    Para ejecutar cambios permitidos se requiere confirmación del coach.
+    """
+    return await client.preview_workout_edit(athlete, workout_id, tss_planned, coach_comment)
 
 
 @mcp.tool()
