@@ -16,12 +16,14 @@ from mcp.client.streamable_http import streamablehttp_client
 def unpack(result):
     obj = getattr(result, "structuredContent", None)
     if isinstance(obj, dict):
+        if "text" in obj and isinstance(obj["text"], str): return json.loads(obj["text"])
         if "result" in obj and isinstance(obj["result"], dict): return obj["result"]
         return obj
     for block in getattr(result, "content", []):
         text = getattr(block, "text", None)
         if text:
             value = json.loads(text)
+            if isinstance(value, dict) and isinstance(value.get("text"), str): return json.loads(value["text"])
             if isinstance(value, dict): return value
     raise RuntimeError("Unexpected MCP response; no JSON payload")
 
