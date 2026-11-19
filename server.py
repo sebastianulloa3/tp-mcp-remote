@@ -850,6 +850,18 @@ async def tp_get_workout_details(athlete: str, workout_id: str) -> dict[str, Any
     return await client.get_workout_details(athlete, workout_id)
 
 
+from tp_zone_adapter import get_athlete_training_zones
+
+
+@mcp.tool()
+async def tp_get_athlete_training_zones(athlete: str, sport: str, metric: str) -> dict[str, Any]:
+    """Lee zonas individuales del atleta si se ha verificado y configurado
+    un endpoint de TrainingPeaks. Solo lectura. Nunca inventa límites.
+    sport: cycling, running, swimming. metric: hr, pace, power.
+    """
+    return await get_athlete_training_zones(client, athlete, sport, metric)
+
+
 @mcp.tool()
 async def tp_get_fitness(athlete: str, days: int = 90, start_date: str | None = None, end_date: str | None = None) -> dict[str, Any]:
     """Devuelve la curva de forma de un atleta: CTL (fitness), ATL (fatiga) y TSB (frescura).
