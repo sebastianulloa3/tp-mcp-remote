@@ -1,0 +1,316 @@
+{
+  "schema_version": 1,
+  "source": "Netlify connected account",
+  "count": 44,
+  "notes": "Classification, source recovery and deploy method must be verified individually.",
+  "sites": [
+    {
+      "name": "wolfpackstore",
+      "site_id": "d20d907f-8afb-40ac-acc4-9342fa516c48",
+      "url": "https://swimpack.co",
+      "classification": "pending_review",
+      "source_recovered": false
+    },
+    {
+      "name": "calculadora-wolfie",
+      "site_id": "83577bcf-fa79-4d3b-a40a-14bac0da3986",
+      "url": "https://calculadora-wolfie.netlify.app",
+      "classification": "pending_review",
+      "source_recovered": false
+    },
+    {
+      "name": "wolfpack-manada",
+      "site_id": "5b7d154b-2313-4af7-92ab-c20b0edfd88f",
+      "url": "https://wolfpack-manada.netlify.app",
+      "classification": "pending_review",
+      "source_recovered": false
+    },
+    {
+      "name": "wolfpack-sxh",
+      "site_id": "c6475e6c-4882-4b61-97b7-3e9f3ddb4436",
+      "url": "https://wolfpack-sxh.com",
+      "classification": "pending_review",
+      "source_recovered": false
+    },
+    {
+      "name": "swimpack",
+      "site_id": "c118ab25-d745-4412-b7ec-9aa825692f2f",
+      "url": "https://swimpack.netlify.app",
+      "classification": "pending_review",
+      "source_recovered": false
+    },
+    {
+      "name": "wolfpack-caja",
+      "site_id": "cc191242-ceb9-4a34-b015-4e526a1aba72",
+      "url": "https://wolfpack-caja.netlify.app",
+      "classification": "pending_review",
+      "source_recovered": false
+    },
+    {
+      "name": "beneficios-wolfpack",
+      "site_id": "e62dba18-6e3a-4d21-9e86-4918ea064626",
+      "url": "https://beneficios-wolfpack.netlify.app",
+      "classification": "pending_review",
+      "source_recovered": false
+    },
+    {
+      "name": "wolfpack-timing",
+      "site_id": "78fc3d45-793b-45c8-89b3-2c6e2f8d75ad",
+      "url": "https://wolfpack-timing.netlify.app",
+      "classification": "pending_review",
+      "source_recovered": false
+    },
+    {
+      "name": "wolfpack-inscripciones",
+      "site_id": "346678b6-ddc6-48a0-8d63-3d95cee32ad6",
+      "url": "https://wolfpack-inscripciones.netlify.app",
+      "classification": "pending_review",
+      "source_recovered": false
+    },
+    {
+      "name": "swimpack-survey",
+      "site_id": "e1245699-5282-4f1b-a98a-add8ca72a23d",
+      "url": "https://swimpack-survey.netlify.app",
+      "classification": "pending_review",
+      "source_recovered": false
+    },
+    {
+      "name": "swimpack-desayuno",
+      "site_id": "75891c4b-ed27-4ca9-ba20-1a417bfea4dd",
+      "url": "https://swimpack-desayuno.netlify.app",
+      "classification": "pending_review",
+      "source_recovered": false
+    },
+    {
+      "name": "wolfpack-biblioteca",
+      "site_id": "f31462f3-1487-4b65-9548-f2a81e2d3407",
+      "url": "https://wolfpack-biblioteca.netlify.app",
+      "classification": "pending_review",
+      "source_recovered": false
+    },
+    {
+      "name": "wolfpack-libreria",
+      "site_id": "46699052-effb-43a2-aed9-a84b0b0bb1f4",
+      "url": "https://wolfpack-libreria.netlify.app",
+      "classification": "pending_review",
+      "source_recovered": false
+    },
+    {
+      "name": "wolfpack-manada-staff",
+      "site_id": "a01f0d2c-12d3-4fc2-bb2b-9b2922917134",
+      "url": "https://wolfpack-manada-staff.netlify.app",
+      "classification": "pending_review",
+      "source_recovered": false
+    },
+    {
+      "name": "wolfpack-camp",
+      "site_id": "5c02f649-a29d-40b9-b43f-172ee45822d0",
+      "url": "https://wolfpack-camp.netlify.app",
+      "classification": "pending_review",
+      "source_recovered": false
+    },
+    {
+      "name": "wolfpack-vuelve",
+      "site_id": "b72bab22-4376-40a7-9adf-521e823bf9ef",
+      "url": "https://wolfpack-vuelve.netlify.app",
+      "classification": "pending_review",
+      "source_recovered": false
+    },
+    {
+      "name": "wolfpack-memberpack",
+      "site_id": "05f35891-93b4-4bd4-a253-5823d9f99979",
+      "url": "https://wolfpack-memberpack.netlify.app",
+      "classification": "pending_review",
+      "source_recovered": false
+    },
+    {
+      "name": "wolfpack-metodo",
+      "site_id": "ebeb6021-ee64-48b1-b6d0-350a06546116",
+      "url": "https://wolfpack-metodo.netlify.app",
+      "classification": "pending_review",
+      "source_recovered": false
+    },
+    {
+      "name": "wolfpack-lets-run",
+      "site_id": "e9757803-ba7c-4fad-8a9f-10730c9e2ba9",
+      "url": "https://wolfpack-lets-run.netlify.app",
+      "classification": "pending_review",
+      "source_recovered": false
+    },
+    {
+      "name": "swimfest-wolfpack",
+      "site_id": "a425f189-7e29-463b-8b34-5d9ba6701650",
+      "url": "https://swimfest-wolfpack.netlify.app",
+      "classification": "pending_review",
+      "source_recovered": false
+    },
+    {
+      "name": "wolfpack-ruta-del-lobo",
+      "site_id": "57a2dcf4-c747-4e91-81ef-a6cc8c4429cd",
+      "url": "https://wolfpack-ruta-del-lobo.netlify.app",
+      "classification": "pending_review",
+      "source_recovered": false
+    },
+    {
+      "name": "wolfpack-manual",
+      "site_id": "801b9594-e988-4919-b358-5811f93e891e",
+      "url": "https://wolfpack-manual.netlify.app",
+      "classification": "pending_review",
+      "source_recovered": false
+    },
+    {
+      "name": "wolfpack-sxh-privacidad",
+      "site_id": "937fe09d-b0dc-4b16-a2e4-bb47d96f7a68",
+      "url": "https://wolfpack-sxh-privacidad.netlify.app",
+      "classification": "pending_review",
+      "source_recovered": false
+    },
+    {
+      "name": "peppy-bavarois-ec4fa0",
+      "site_id": "b6ffd4a8-fa3b-4612-ae75-42e1d5d78b37",
+      "url": "https://peppy-bavarois-ec4fa0.netlify.app",
+      "classification": "pending_review",
+      "source_recovered": false
+    },
+    {
+      "name": "tricampwolfpacknoviembre",
+      "site_id": "008234ff-537c-4a28-acb2-2db92c6212ca",
+      "url": "https://tricampwolfpacknoviembre.netlify.app",
+      "classification": "pending_review",
+      "source_recovered": false
+    },
+    {
+      "name": "wp-valoraciones",
+      "site_id": "bc847049-21e2-40e6-9aed-b6b1ec5bd749",
+      "url": "https://wp-valoraciones.netlify.app",
+      "classification": "pending_review",
+      "source_recovered": false
+    },
+    {
+      "name": "wolfpack-eventos",
+      "site_id": "df40da74-05a5-403c-b175-27b8fedf5a79",
+      "url": "https://wolfpack-eventos.netlify.app",
+      "classification": "pending_review",
+      "source_recovered": false
+    },
+    {
+      "name": "wolfpack-registro",
+      "site_id": "c41336b7-e466-4e41-92f1-0a589826aea5",
+      "url": "https://wolfpack-registro.netlify.app",
+      "classification": "pending_review",
+      "source_recovered": false
+    },
+    {
+      "name": "pagos-manada",
+      "site_id": "8030f244-f2f1-4dad-bd4b-539905bac0a8",
+      "url": "https://pagos-manada.netlify.app",
+      "classification": "pending_review",
+      "source_recovered": false
+    },
+    {
+      "name": "resultadosswimfest30deagosto",
+      "site_id": "c7cacf16-26f9-4f60-9937-77cc50fdb290",
+      "url": "https://resultadosswimfest30deagosto.netlify.app",
+      "classification": "pending_review",
+      "source_recovered": false
+    },
+    {
+      "name": "bienvenidoalamanada",
+      "site_id": "9c64600f-60d8-42af-80e0-10c65a56dc1a",
+      "url": "https://bienvenidoalamanada.netlify.app",
+      "classification": "pending_review",
+      "source_recovered": false
+    },
+    {
+      "name": "swimfest-wolfpack-junio",
+      "site_id": "d32b7968-a7af-437d-91bb-bb5042eb8c52",
+      "url": "https://swimfest-wolfpack-junio.netlify.app",
+      "classification": "pending_review",
+      "source_recovered": false
+    },
+    {
+      "name": "perfilnadadorwolfpack",
+      "site_id": "48ebdf7b-16dd-49ec-8783-247bb5e0af83",
+      "url": "https://perfilnadadorwolfpack.netlify.app",
+      "classification": "pending_review",
+      "source_recovered": false
+    },
+    {
+      "name": "swimlabmodulo1",
+      "site_id": "087fabbc-0708-45b7-8235-cfbe79d263df",
+      "url": "https://swimlabmodulo1.netlify.app",
+      "classification": "pending_review",
+      "source_recovered": false
+    },
+    {
+      "name": "wolfpackmasterclassaguasabiertas",
+      "site_id": "3a8476cf-cbb6-4395-8bcd-1f86c2e331e8",
+      "url": "https://wolfpackmasterclassaguasabiertas.netlify.app",
+      "classification": "pending_review",
+      "source_recovered": false
+    },
+    {
+      "name": "tricampwolfpacksxh",
+      "site_id": "7725ee79-2abb-4d87-9805-d09fbf828190",
+      "url": "https://tricampwolfpacksxh.netlify.app",
+      "classification": "pending_review",
+      "source_recovered": false
+    },
+    {
+      "name": "cheerful-kataifi-bcc1cd",
+      "site_id": "7cc3a090-deff-493d-b3b4-d799dde20a0e",
+      "url": "https://cheerful-kataifi-bcc1cd.netlify.app",
+      "classification": "pending_review",
+      "source_recovered": false
+    },
+    {
+      "name": "elegant-gingersnap-1c1f36",
+      "site_id": "3f16da73-7d3a-4516-b287-92d05a4f7bdd",
+      "url": "https://elegant-gingersnap-1c1f36.netlify.app",
+      "classification": "pending_review",
+      "source_recovered": false
+    },
+    {
+      "name": "ruta-directv-wolfpack",
+      "site_id": "a96f3356-877e-437d-aee1-df3a467801dd",
+      "url": "https://ruta-directv-wolfpack.netlify.app",
+      "classification": "pending_review",
+      "source_recovered": false
+    },
+    {
+      "name": "wolfpack-store",
+      "site_id": "07548c85-9c5f-4e8d-9aa1-a2059b9d14c6",
+      "url": "https://wolfpack-store.netlify.app",
+      "classification": "pending_review",
+      "source_recovered": false
+    },
+    {
+      "name": "tricamp-wolfpack",
+      "site_id": "54e913d2-829b-4399-869c-d5dbc85cd6f0",
+      "url": "https://tricamp-wolfpack.netlify.app",
+      "classification": "pending_review",
+      "source_recovered": false
+    },
+    {
+      "name": "wolfpack-manada-9xw0",
+      "site_id": "0edb9a5b-3b0d-40c2-a3ed-fbc50baeed57",
+      "url": "https://wolfpack-manada-9xw0.netlify.app",
+      "classification": "pending_review",
+      "source_recovered": false
+    },
+    {
+      "name": "swimpack-encuesta",
+      "site_id": "645f66c2-c35d-4a22-9cb8-94a7aaea3fd7",
+      "url": "https://swimpack-encuesta.netlify.app",
+      "classification": "pending_review",
+      "source_recovered": false
+    },
+    {
+      "name": "wolfpack-horarios-piscina",
+      "site_id": "6a4527c4-1825-4957-ac98-c506a2d11c6d",
+      "url": "https://wolfpack-horarios-piscina.netlify.app",
+      "classification": "pending_review",
+      "source_recovered": false
+    }
+  ]
+}
