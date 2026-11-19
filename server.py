@@ -540,6 +540,30 @@ class TPClient:
             raise ValueError(f"No encontré la sesión {workout_id}: HTTP {resp.status_code}")
         return resp.json()
 
+    async def get_workout_details(self, athlete: str, workout_id: str) -> dict[str, Any]:
+        """Detalle de una actividad, solo lectura. Campos no disponibles quedan explícitos."""
+        athlete_id = await self._resolve_athlete(athlete)
+        w = await self._get_workout_raw(athlete_id, workout_id)
+        if str(w.get("athleteId", athlete_id)) != str(athlete_id):
+            raise ValueError("La actividad no corresponde al atleta solicitado.")
+        keys = (
+            "workoutId", "workoutDay", "title", "workoutTypeValueId",
+            "completed", "totalTime", "distance", "distanceActual",
+            "totalTimePlanned", "distancePlanned", "tssActual", "tssPlanned",
+            "tssMethod", "tssType", "tssTypeId", "intensityFactor",
+            "normalizedPower", "averagePower", "averageHeartRate", "maxHeartRate",
+            "averageSpeed", "averagePace", "thresholdPace", "thresholdHeartRate",
+            "thresholdPower", "pace", "speed", "elevationGain",
+        )
+        fields = {k: w[k] for k in keys if k in w}
+        missing = [k for k in keys if k not in w]
+        return {
+            "athlete_id": athlete_id, "workout_id": workout_id,
+            "fields": fields, "unavailable_fields": missing,
+            "thresholds_verified": False,
+            "note": "Los umbrales y el método de TSS no se pueden confirmar si la respuesta no los expone. No se modifica TrainingPeaks.",
+        }
+
     async def update_workout(self, athlete: str, workout_id: str, title: str | None = None,
                              description: str | None = None, workout_date: str | None = None,
                              duration_minutes: float | None = None, distance_km: float | None = None,
@@ -682,6 +706,15 @@ async def tp_get_workouts(athlete: str, start_date: str | None = None, end_date:
         end_date: Fecha final en formato YYYY-MM-DD (máximo 90 días de rango). Por defecto, hoy.
     """
     return await client.get_workouts(athlete, start_date, end_date)
+
+
+@mcp.tool()
+async def tp_get_workout_details(athlete: str, workout_id: str) -> dict[str, Any]:
+    """Lee detalles de una actividad individual sin modificarla.
+    Devuelve campos disponibles de intensidad/TSS y señala explícitamente los ausentes.
+    No confirma que las zonas actuales estén actualizadas; requiere otra fuente de umbrales.
+    """
+    return await client.get_workout_details(athlete, workout_id)
 
 
 @mcp.tool()
