@@ -540,6 +540,40 @@ class TPClient:
             raise ValueError(f"No encontré la sesión {workout_id}: HTTP {resp.status_code}")
         return resp.json()
 
+    async def audit_tss_range(self, athlete: str, start_date: str, end_date: str,
+                              tss_per_hour_alert: float = 150.0) -> dict[str, Any]:
+        """Señala cargas atípicas sin afirmar que sean erróneas."""
+        if not 0 < tss_per_hour_alert <= 1000:
+            raise ValueError("tss_per_hour_alert debe estar entre 0 y 1000.")
+        data = await self.get_workouts(athlete, start_date, end_date)
+        alerts = []
+        for w in data["workouts"]:
+            if w["status"] != "completado" or w["sport"] == "Descanso":
+                continue
+            hours, tss = w.get("duration_hours_actual"), w.get("tss")
+            if not isinstance(hours, (int, float)) or hours <= 0:
+                continue
+            if not isinstance(tss, (int, float)):
+                continue
+            rate = tss / hours
+            reasons = []
+            if rate >= tss_per_hour_alert:
+                reasons.append("TSS por hora elevado: comprobar método y umbrales")
+            if w["sport"] == "Natación" and hours >= 0.3 and tss < 2:
+                reasons.append("TSS de natación casi nulo: comprobar datos de intensidad")
+            if reasons:
+                alerts.append({
+                    "workout_id": w["id"], "date": w["date"],
+                    "title": w["title"], "sport": w["sport"],
+                    "duration_hours": round(hours, 3), "tss": tss,
+                    "tss_per_hour": round(rate, 1), "reasons": reasons,
+                })
+        return {
+            "athlete_id": data["athlete_id"], "date_range": data["date_range"],
+            "alerts": alerts, "alert_count": len(alerts),
+            "interpretation": "Indicadores de auditoría, no diagnóstico ni corrección automática.",
+        }
+
     async def get_workout_details(self, athlete: str, workout_id: str) -> dict[str, Any]:
         """Detalle de una actividad, solo lectura. Campos no disponibles quedan explícitos."""
         athlete_id = await self._resolve_athlete(athlete)
@@ -706,6 +740,15 @@ async def tp_get_workouts(athlete: str, start_date: str | None = None, end_date:
         end_date: Fecha final en formato YYYY-MM-DD (máximo 90 días de rango). Por defecto, hoy.
     """
     return await client.get_workouts(athlete, start_date, end_date)
+
+
+@mcp.tool()
+async def tp_audit_tss_range(athlete: str, start_date: str, end_date: str,
+                             tss_per_hour_alert: float = 150.0) -> dict[str, Any]:
+    """Audita TSS/h de sesiones completadas y natación con TSS casi nulo.
+    No modifica actividades ni zonas; las alertas requieren validación del coach.
+    """
+    return await client.audit_tss_range(athlete, start_date, end_date, tss_per_hour_alert)
 
 
 @mcp.tool()
