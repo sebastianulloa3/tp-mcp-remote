@@ -37,8 +37,9 @@ class ZoneAdapterTests(unittest.IsolatedAsyncioTestCase):
             "zones": [{"name": "Z2", "lower": 130, "upper": 145}]
         })
         with patch.dict(os.environ, {"TP_ZONE_ENDPOINT_TEMPLATE": "/athletes/{athlete_id}/settings"}):
-            with self.assertRaises(ZoneValidationError):
-                await get_athlete_training_zones(self.client, "Nicolas", "running", "hr")
+            result = await get_athlete_training_zones(self.client, "Nicolas", "running", "hr")
+        self.assertFalse(result["available"])
+        self.assertEqual(result["reason"], "invalid_zone_payload")
 
 if __name__ == "__main__":
     unittest.main()
