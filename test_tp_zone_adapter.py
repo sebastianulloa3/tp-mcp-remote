@@ -13,11 +13,11 @@ class ZoneAdapterTests(unittest.IsolatedAsyncioTestCase):
                                           "unit": "bpm", "source": "trainingpeaks", "updated_at": "2026-11-20",
                                           "zones": [{"name": "Z2", "lower": 130, "upper": 145}]
                                       })))
-    async def test_athlete_only_endpoint(self):
+    async def test_athlete_only_endpoint_requires_probe(self):
         with patch.dict(os.environ, {"TP_ZONE_ENDPOINT_TEMPLATE": "/fitness/v1/athletes/{athlete_id}/settings"}):
-            result = await get_athlete_training_zones(self.client, "Nicolas", "running", "hr")
-        self.assertTrue(result["available"])
-        self.client._request.assert_awaited_once_with("GET", "/fitness/v1/athletes/123/settings")
+            with self.assertRaises(ZoneValidationError):
+                await get_athlete_training_zones(self.client, "Nicolas", "running", "hr")
+        self.client._request.assert_not_awaited()
 
     async def test_missing_endpoint_fails_closed(self):
         with patch.dict(os.environ, {"TP_ZONE_ENDPOINT_TEMPLATE": ""}):
@@ -36,7 +36,7 @@ class ZoneAdapterTests(unittest.IsolatedAsyncioTestCase):
             "unit": "bpm", "source": "trainingpeaks", "updated_at": "2026-11-20",
             "zones": [{"name": "Z2", "lower": 130, "upper": 145}]
         })
-        with patch.dict(os.environ, {"TP_ZONE_ENDPOINT_TEMPLATE": "/athletes/{athlete_id}/settings"}):
+        with patch.dict(os.environ, {"TP_ZONE_ENDPOINT_TEMPLATE": "/athletes/{athlete_id}/{sport}/{metric}"}):
             result = await get_athlete_training_zones(self.client, "Nicolas", "running", "hr")
         self.assertFalse(result["available"])
         self.assertEqual(result["reason"], "invalid_zone_payload")
