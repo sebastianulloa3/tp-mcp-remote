@@ -18,12 +18,11 @@ async def get_athlete_training_zones(tp_client, athlete: str, sport: str, metric
         return {"available": False, "athlete_id": athlete_id, "sport": sport,
                 "metric": metric, "reason": "zone_endpoint_not_verified",
                 "message": "Configurar TP_ZONE_ENDPOINT_TEMPLATE solo después de verificar un endpoint real de TrainingPeaks."}
-    if not _ALLOWED.fullmatch(template) or not all(
-        "{" + key + "}" in template for key in _PLACEHOLDERS
-    ):
+    if not _ALLOWED.fullmatch(template):
         raise ZoneValidationError("Invalid zone endpoint template")
-    if set(re.findall(r"{([^{}]+)}", template)) != _PLACEHOLDERS:
-        raise ZoneValidationError("Unexpected endpoint placeholder")
+    placeholders = set(re.findall(r"{([^{}]+)}", template))
+    if "athlete_id" not in placeholders or not placeholders.issubset(_PLACEHOLDERS):
+        raise ZoneValidationError("Invalid zone endpoint placeholders")
     path = template.format(athlete_id=athlete_id, sport=sport, metric=metric)
     response = await tp_client._request("GET", path)
     if response.status_code != 200:
