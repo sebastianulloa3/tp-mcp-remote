@@ -2,7 +2,7 @@ import os
 import unittest
 from unittest.mock import AsyncMock, patch
 from types import SimpleNamespace
-from tp_zone_adapter import get_athlete_training_zones
+from tp_zone_adapter import get_athlete_training_zones, probe_athlete_zone_settings
 from training_zones import ZoneValidationError
 
 class ZoneAdapterTests(unittest.IsolatedAsyncioTestCase):
@@ -43,3 +43,34 @@ class ZoneAdapterTests(unittest.IsolatedAsyncioTestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+class ZoneSettingsProbeTests(unittest.IsolatedAsyncioTestCase):
+    def setUp(self):
+        self.client = SimpleNamespace(
+            _resolve_athlete=AsyncMock(return_value=6664356),
+            _request=AsyncMock(return_value=SimpleNamespace(
+                status_code=200,
+                json=lambda: {"heartRateZones": [{"lower": 123}], "email": "private@example.com"})))
+
+    async def test_probe_off_no_request(self):
+        with patch.dict(os.environ, {}, clear=True):
+            result = await probe_athlete_zone_settings(self.client, "Nicolas Gil")
+        self.assertEqual(result["reason"], "probe_disabled")
+        self.client._request.assert_not_awaited()
+
+    async def test_metadata_only(self):
+        with patch.dict(os.environ, {"TP_ZONE_SETTINGS_PROBE_ENABLED": "true"}):
+            result = await probe_athlete_zone_settings(self.client, "Nicolas Gil")
+        self.assertEqual(result["http_status"], 200)
+        self.assertFalse(result["zones_verified"])
+        self.assertNotIn("private@example.com", str(result))
+        self.assertNotIn("123", str(result))
+        self.client._request.assert_awaited_once_with(
+            "GET", "/fitness/v1/athletes/6664356/settings")
+
+    async def test_upstream_403(self):
+        self.client._request.return_value = SimpleNamespace(status_code=403)
+        with patch.dict(os.environ, {"TP_ZONE_SETTINGS_PROBE_ENABLED": "true"}):
+            result = await probe_athlete_zone_settings(self.client, "Nicolas Gil")
+        self.assertEqual(result["http_status"], 403)
+        self.assertFalse(result["available"])
