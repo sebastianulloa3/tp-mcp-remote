@@ -850,7 +850,7 @@ async def tp_get_workout_details(athlete: str, workout_id: str) -> dict[str, Any
     return await client.get_workout_details(athlete, workout_id)
 
 
-from tp_zone_adapter import get_athlete_training_zones
+from tp_zone_adapter import get_athlete_training_zones, probe_athlete_zone_settings
 
 
 @mcp.tool()
@@ -860,6 +860,16 @@ async def tp_get_athlete_training_zones(athlete: str, sport: str, metric: str) -
     sport: cycling, running, swimming. metric: hr, pace, power.
     """
     return await get_athlete_training_zones(client, athlete, sport, metric)
+
+
+@mcp.tool()
+async def tp_probe_athlete_zone_settings(athlete: str) -> dict[str, Any]:
+    """Diagnóstico de solo lectura del endpoint candidato de zonas.
+
+    Requiere TP_ZONE_SETTINGS_PROBE_ENABLED=true. Devuelve HTTP status y nombres
+    de campos, nunca zonas, credenciales ni datos del atleta.
+    """
+    return await probe_athlete_zone_settings(client, athlete)
 
 
 @mcp.tool()
