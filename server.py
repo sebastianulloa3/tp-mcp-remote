@@ -540,6 +540,132 @@ class TPClient:
             raise ValueError(f"No encontré la sesión {workout_id}: HTTP {resp.status_code}")
         return resp.json()
 
+    async def preview_copy_week(self, athlete: str, source_week: str,
+                                target_week: str, sports: list[str] | None = None,
+                                weekdays: list[int] | None = None) -> dict[str, Any]:
+        """Previsualiza copias de sesiones planificadas sin modificar calendarios."""
+        source_day = datetime.strptime(source_week, "%Y-%m-%d").date()
+        target_day = datetime.strptime(target_week, "%Y-%m-%d").date()
+        source_monday = source_day - timedelta(days=source_day.weekday())
+        target_monday = target_day - timedelta(days=target_day.weekday())
+        if source_monday == target_monday:
+            raise ValueError("La semana origen y destino deben ser distintas.")
+        if weekdays is not None and any(d not in range(7) for d in weekdays):
+            raise ValueError("weekdays usa 0=lunes hasta 6=domingo.")
+        source = await self.get_workouts(athlete, source_monday.isoformat(),
+                                         (source_monday + timedelta(days=6)).isoformat())
+        target = await self.get_workouts(athlete, target_monday.isoformat(),
+                                         (target_monday + timedelta(days=6)).isoformat())
+        selected_sports = {x.lower() for x in sports} if sports else None
+        proposals = []
+        for w in source["workouts"]:
+            if w["sport"] == "Descanso" or w["status"] != "planificado":
+                continue
+            day = date.fromisoformat(w["date"])
+            if weekdays is not None and day.weekday() not in weekdays:
+                continue
+            if selected_sports and w["sport"].lower() not in selected_sports:
+                continue
+            new_day = target_monday + timedelta(days=day.weekday())
+            existing = [x for x in target["workouts"] if x["date"] == new_day.isoformat()
+                        and x["sport"] == w["sport"]]
+            proposals.append({
+                "source_workout_id": w["id"], "title": w["title"],
+                "sport": w["sport"], "source_date": w["date"],
+                "target_date": new_day.isoformat(), "target_existing": existing,
+                "conflict": bool(existing), "description": w.get("description"),
+                "duration_minutes": round(w["duration_hours_planned"] * 60, 2)
+                    if w.get("duration_hours_planned") is not None else None,
+                "tss_planned": w.get("tss") if w["status"] == "planificado" else None,
+            })
+        return {"athlete_id": source["athlete_id"], "source_week": source_monday.isoformat(),
+                "target_week": target_monday.isoformat(), "proposals": proposals,
+                "applied": False, "note": "Solo previsualización. Requiere aprobación antes de crear copias."}
+
+    async def preview_workout_edit(self, athlete: str, workout_id: str,
+                                   tss_planned: float | None = None,
+                                   coach_comment: str | None = None) -> dict[str, Any]:
+        """Previsualiza cambios permitidos; nunca escribe ni altera TSS real."""
+        athlete_id = await self._resolve_athlete(athlete)
+        w = await self._get_workout_raw(athlete_id, workout_id)
+        if str(w.get("athleteId", athlete_id)) != str(athlete_id):
+            raise ValueError("La actividad no pertenece al atleta indicado.")
+        if tss_planned is None and coach_comment is None:
+            raise ValueError("Indica al menos un campo a previsualizar.")
+        if tss_planned is not None and not (0 <= tss_planned <= 2000):
+            raise ValueError("tss_planned debe estar entre 0 y 2000.")
+        completed = bool(w.get("completed")) or (w.get("totalTime") or 0) > 0
+        if completed and tss_planned is not None:
+            raise ValueError("No se puede corregir TSS real cambiando tss_planned en una sesión completada.")
+        changes = {}
+        if tss_planned is not None:
+            changes["tssPlanned"] = {"before": w.get("tssPlanned"), "after": tss_planned}
+        if coach_comment is not None:
+            changes["coachComments"] = {"before": w.get("coachComments"), "after": coach_comment}
+        return {
+            "athlete_id": athlete_id, "workout_id": workout_id,
+            "completed": completed, "changes": changes, "applied": False,
+            "next_step": "Solicitar confirmación explícita del coach y usar tp_update_workout únicamente para estos campos permitidos.",
+        }
+
+    async def audit_tss_range(self, athlete: str, start_date: str, end_date: str,
+                              tss_per_hour_alert: float = 150.0) -> dict[str, Any]:
+        """Señala cargas atípicas sin afirmar que sean erróneas."""
+        if not 0 < tss_per_hour_alert <= 1000:
+            raise ValueError("tss_per_hour_alert debe estar entre 0 y 1000.")
+        data = await self.get_workouts(athlete, start_date, end_date)
+        alerts = []
+        for w in data["workouts"]:
+            if w["status"] != "completado" or w["sport"] == "Descanso":
+                continue
+            hours, tss = w.get("duration_hours_actual"), w.get("tss")
+            if not isinstance(hours, (int, float)) or hours <= 0:
+                continue
+            if not isinstance(tss, (int, float)):
+                continue
+            rate = tss / hours
+            reasons = []
+            if rate >= tss_per_hour_alert:
+                reasons.append("TSS por hora elevado: comprobar método y umbrales")
+            if w["sport"] == "Natación" and hours >= 0.3 and tss < 2:
+                reasons.append("TSS de natación casi nulo: comprobar datos de intensidad")
+            if reasons:
+                alerts.append({
+                    "workout_id": w["id"], "date": w["date"],
+                    "title": w["title"], "sport": w["sport"],
+                    "duration_hours": round(hours, 3), "tss": tss,
+                    "tss_per_hour": round(rate, 1), "reasons": reasons,
+                })
+        return {
+            "athlete_id": data["athlete_id"], "date_range": data["date_range"],
+            "alerts": alerts, "alert_count": len(alerts),
+            "interpretation": "Indicadores de auditoría, no diagnóstico ni corrección automática.",
+        }
+
+    async def get_workout_details(self, athlete: str, workout_id: str) -> dict[str, Any]:
+        """Detalle de una actividad, solo lectura. Campos no disponibles quedan explícitos."""
+        athlete_id = await self._resolve_athlete(athlete)
+        w = await self._get_workout_raw(athlete_id, workout_id)
+        if str(w.get("athleteId", athlete_id)) != str(athlete_id):
+            raise ValueError("La actividad no corresponde al atleta solicitado.")
+        keys = (
+            "workoutId", "workoutDay", "title", "workoutTypeValueId",
+            "completed", "totalTime", "distance", "distanceActual",
+            "totalTimePlanned", "distancePlanned", "tssActual", "tssPlanned",
+            "tssMethod", "tssType", "tssTypeId", "intensityFactor",
+            "normalizedPower", "averagePower", "averageHeartRate", "maxHeartRate",
+            "averageSpeed", "averagePace", "thresholdPace", "thresholdHeartRate",
+            "thresholdPower", "pace", "speed", "elevationGain",
+        )
+        fields = {k: w[k] for k in keys if k in w}
+        missing = [k for k in keys if k not in w]
+        return {
+            "athlete_id": athlete_id, "workout_id": workout_id,
+            "fields": fields, "unavailable_fields": missing,
+            "thresholds_verified": False,
+            "note": "Los umbrales y el método de TSS no se pueden confirmar si la respuesta no los expone. No se modifica TrainingPeaks.",
+        }
+
     async def update_workout(self, athlete: str, workout_id: str, title: str | None = None,
                              description: str | None = None, workout_date: str | None = None,
                              duration_minutes: float | None = None, distance_km: float | None = None,
@@ -682,6 +808,68 @@ async def tp_get_workouts(athlete: str, start_date: str | None = None, end_date:
         end_date: Fecha final en formato YYYY-MM-DD (máximo 90 días de rango). Por defecto, hoy.
     """
     return await client.get_workouts(athlete, start_date, end_date)
+
+
+@mcp.tool()
+async def tp_preview_copy_week(athlete: str, source_week: str, target_week: str,
+                               sports: list[str] | None = None,
+                               weekdays: list[int] | None = None) -> dict[str, Any]:
+    """Previsualiza copiar entrenamientos planificados entre semanas, con detección
+    de conflictos por fecha y deporte. weekdays: 0=lunes, 6=domingo.
+    No copia actividades completadas ni realiza escrituras.
+    """
+    return await client.preview_copy_week(athlete, source_week, target_week, sports, weekdays)
+
+
+@mcp.tool()
+async def tp_preview_workout_edit(athlete: str, workout_id: str,
+                                  tss_planned: float | None = None,
+                                  coach_comment: str | None = None) -> dict[str, Any]:
+    """Previsualiza una edición sin aplicarla. Rechaza editar TSS planificado
+    en sesiones completadas porque eso no corrige el TSS real.
+    Para ejecutar cambios permitidos se requiere confirmación del coach.
+    """
+    return await client.preview_workout_edit(athlete, workout_id, tss_planned, coach_comment)
+
+
+@mcp.tool()
+async def tp_audit_tss_range(athlete: str, start_date: str, end_date: str,
+                             tss_per_hour_alert: float = 150.0) -> dict[str, Any]:
+    """Audita TSS/h de sesiones completadas y natación con TSS casi nulo.
+    No modifica actividades ni zonas; las alertas requieren validación del coach.
+    """
+    return await client.audit_tss_range(athlete, start_date, end_date, tss_per_hour_alert)
+
+
+@mcp.tool()
+async def tp_get_workout_details(athlete: str, workout_id: str) -> dict[str, Any]:
+    """Lee detalles de una actividad individual sin modificarla.
+    Devuelve campos disponibles de intensidad/TSS y señala explícitamente los ausentes.
+    No confirma que las zonas actuales estén actualizadas; requiere otra fuente de umbrales.
+    """
+    return await client.get_workout_details(athlete, workout_id)
+
+
+from tp_zone_adapter import get_athlete_training_zones, probe_athlete_zone_settings
+
+
+@mcp.tool()
+async def tp_get_athlete_training_zones(athlete: str, sport: str, metric: str) -> dict[str, Any]:
+    """Lee zonas individuales del atleta si se ha verificado y configurado
+    un endpoint de TrainingPeaks. Solo lectura. Nunca inventa límites.
+    sport: cycling, running, swimming. metric: hr, pace, power.
+    """
+    return await get_athlete_training_zones(client, athlete, sport, metric)
+
+
+@mcp.tool()
+async def tp_probe_athlete_zone_settings(athlete: str) -> dict[str, Any]:
+    """Diagnóstico de solo lectura del endpoint candidato de zonas.
+
+    Requiere TP_ZONE_SETTINGS_PROBE_ENABLED=true. Devuelve HTTP status y nombres
+    de campos, nunca zonas, credenciales ni datos del atleta.
+    """
+    return await probe_athlete_zone_settings(client, athlete)
 
 
 @mcp.tool()

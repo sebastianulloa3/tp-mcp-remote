@@ -1,0 +1,21 @@
+name: TrainingPeaks zone tests
+on:
+  push:
+    branches: [feature/tss-audit]
+  pull_request:
+    paths:
+      - 'training_zones.py'
+      - 'tp_zone_adapter.py'
+      - 'test_training_zones.py'
+      - 'test_tp_zone_adapter.py'
+      - '.github/workflows/test-training-zones.yml'
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Test zone validation and read-only adapter
+        run: python -m unittest -v test_training_zones test_tp_zone_adapter
