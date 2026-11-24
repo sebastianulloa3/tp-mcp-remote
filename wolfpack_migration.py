@@ -6,6 +6,7 @@ import json
 import hashlib
 from datetime import datetime, timezone
 import httpx
+from intervals_translator import translate_workouts
 
 def register_migration_tools(mcp, tp_get):
     async def fetch(url):
@@ -37,6 +38,15 @@ def register_migration_tools(mcp, tp_get):
         stable = json.dumps(workouts, sort_keys=True, ensure_ascii=False, default=str)
         payload["sha256"] = hashlib.sha256(stable.encode()).hexdigest()
         return payload
+
+    @mcp.tool()
+    async def wp_translate_library_to_intervals(library_id: int) -> dict:
+        """Translate a TrainingPeaks library to Intervals.icu workout text (dry run, no writes)."""
+        exported = await wp_export_library_json(library_id, include_structure=True)
+        result = translate_workouts(exported["workouts"])
+        result.update({"source": "trainingpeaks", "library_id": library_id,
+                       "source_sha256": exported["sha256"]})
+        return result
 
     @mcp.tool()
     async def wp_export_plan_json(plan_id: int) -> dict:
