@@ -3,11 +3,12 @@ on:
   pull_request:
     paths:
       - 'wolfpack_migration.py'
+      - 'intervals_translator.py'
       - 'tests/**'
       - 'requirements.txt'
       - '.github/workflows/migration-tests.yml'
   push:
-    branches: ['feature/wolfpack-intervals-migration']
+    branches: ['feature/wolfpack-intervals-migration', 'feature/intervals-translator']
 jobs:
   test:
     runs-on: ubuntu-latest
@@ -17,5 +18,5 @@ jobs:
         with:
           python-version: '3.13'
       - run: pip install -r requirements.txt pytest
-      - run: python -m compileall -q wolfpack_migration.py server.py
-      - run: python -m pytest -q tests/test_wolfpack_migration.py
+      - run: python -m compileall -q wolfpack_migration.py intervals_translator.py server.py
+      - run: python -m pytest -q tests/test_wolfpack_migration.py tests/test_intervals_translator.py
