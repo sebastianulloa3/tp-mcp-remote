@@ -812,6 +812,111 @@ from wolfpack_migration import register_migration_tools
 register_migration_tools(mcp, _tp_get_url)
 
 
+
+# Structured workout tools: native builder format, verified by read-back.
+import json
+import math
+
+def _build_structure(metric: str, unit: str, blocks: list[dict]) -> dict:
+    if metric not in ("percentOfThresholdPace", "percentOfThresholdHr", "percentOfFtp"):
+        raise ValueError("Unsupported intensity metric")
+    if unit not in ("second", "meter") or not blocks or len(blocks) > 100:
+        raise ValueError("Invalid unit or blocks")
+    result, spans = [], []
+    pos = 0
+    for block in blocks:
+        reps = block.get("reps", 1)
+        if type(reps) is not int or not 1 <= reps <= 100:
+            raise ValueError("Invalid repetitions")
+        steps = block.get("steps")
+        if not isinstance(steps, list) or not 1 <= len(steps) <= 20:
+            raise ValueError("Invalid steps")
+        repeated = reps != 1 or len(steps) != 1
+        native = []
+        for step in steps:
+            n, lo, hi = step["length"], step["min"], step["max"]
+            cls = step.get("class", "active")
+            if type(n) is not int or n <= 0 or n > 100000:
+                raise ValueError("Invalid step length")
+            if cls not in ("warmUp", "active", "rest", "coolDown"):
+                raise ValueError("Invalid intensity class")
+            if any(type(v) not in (int, float) or not math.isfinite(v) for v in (lo, hi)) or not 0 <= lo <= hi <= 300:
+                raise ValueError("Invalid intensity range")
+            item = {"name": str(step["name"]), "length": {"value": n, "unit": unit},
+                    "targets": [{"minValue": lo, "maxValue": hi}], "intensityClass": cls,
+                    "openDuration": False}
+            if repeated:
+                item["type"] = "step"
+            native.append(item)
+        begin = pos
+        for _ in range(reps):
+            for item in native:
+                end = pos + item["length"]["value"]
+                spans.append((pos, end, item["targets"][0]["maxValue"]))
+                pos = end
+                if len(spans) > 1000:
+                    raise ValueError("Too many intervals")
+        result.append({"type": "repetition" if repeated else "step",
+                       "length": {"value": reps, "unit": "repetition"},
+                       "steps": native, "begin": begin, "end": pos})
+    peak = max(1, max(x[2] for x in spans))
+    poly = []
+    for a,b,h in spans:
+        x,y,z = round(a/pos, 6), round(b/pos, 6), round(h/peak, 6)
+        poly.extend([[x,0],[x,z],[y,z],[y,0]])
+    return {"structure": result, "polyline": poly,
+            "primaryLengthMetric": "duration" if unit == "second" else "distance",
+            "primaryIntensityMetric": metric, "primaryIntensityTargetOrRange": "range",
+            "visualizationDistanceUnit": "meter" if unit == "meter" else None}
+
+def _decode_structure(value):
+    if isinstance(value, str):
+        return json.loads(value)
+    return value
+
+@mcp.tool()
+async def tp_validate_workout_structure(metric: str, unit: str, blocks: list[dict]) -> dict:
+    """Dry run. Each block has reps and steps; each step has name, length (seconds or meters), min/max percentage and class. No writes."""
+    return _build_structure(metric, unit, blocks)
+
+@mcp.tool()
+async def tp_get_workout_structure(athlete: str, workout_id: str) -> dict:
+    """Read native Workout Builder structure from an existing calendar workout."""
+    aid = await client._resolve_athlete(athlete)
+    w = await client._get_workout_raw(aid, workout_id)
+    return {"workout_id": workout_id, "structure": _decode_structure(w.get("structure"))}
+
+@mcp.tool()
+async def tp_update_workout_structure(athlete: str, workout_id: str, metric: str, unit: str,
+                                      blocks: list[dict], dry_run: bool = True) -> dict:
+    """Update existing planned workout only. Default dry run. Explicitly authorize live write. Read-back verification; never retry automatically."""
+    native = _build_structure(metric, unit, blocks)
+    aid = await client._resolve_athlete(athlete)
+    w = await client._get_workout_raw(aid, workout_id)
+    if w.get("completed") or (w.get("totalTime") or 0) > 0:
+        raise ValueError("Completed workout cannot be changed")
+    sport = w.get("workoutTypeValueId")
+    if sport not in (1,2,3) or (metric == "percentOfFtp" and sport != 2):
+        raise ValueError("Unsupported sport/metric")
+    if dry_run:
+        return {"dry_run": True, "workout_id": workout_id, "structure": native}
+    _writes_enabled()
+    w["structure"] = json.dumps(native, allow_nan=False)
+    total = native["structure"][-1]["end"]
+    if unit == "second":
+        w["totalTimePlanned"] = total / 3600
+    else:
+        w["distancePlanned"] = total
+    resp = await client._request("PUT", f"/fitness/v6/athletes/{aid}/workouts/{workout_id}", json=w)
+    if resp.status_code not in (200,204):
+        raise ValueError(f"Structured update failed HTTP {resp.status_code}")
+    saved = await client._get_workout_raw(aid, workout_id)
+    actual = _decode_structure(saved.get("structure"))
+    verified = isinstance(actual, dict) and all(actual.get(k) == native[k] for k in ("structure","primaryLengthMetric","primaryIntensityMetric"))
+    return {"ok": verified, "write_sent": True, "verified": verified,
+            "workout_id": workout_id, "structure": actual}
+
+
 class _NormalizeMcpPath:
     """Hace que /mcp (sin barra final) funcione igual que /mcp/ sin redirect 307.
 
